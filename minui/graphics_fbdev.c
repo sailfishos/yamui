@@ -56,7 +56,7 @@ minui_backend* open_fbdev() {
     return &my_backend;
 }
 
-static void fbdev_blank(minui_backend* backend __unused, bool blank)
+static void fbdev_blank(minui_backend* backend __attribute__((unused)), bool blank)
 {
     int ret;
 
@@ -175,7 +175,7 @@ static gr_surface fbdev_init(minui_backend* backend) {
     return gr_draw;
 }
 
-static gr_surface fbdev_flip(minui_backend* backend __unused) {
+static gr_surface fbdev_flip(minui_backend* backend __attribute__((unused))) {
     if (double_buffered) {
         // Change gr_draw to point to the buffer currently displayed,
         // then flip the driver so we're displaying the other buffer
@@ -190,7 +190,7 @@ static gr_surface fbdev_flip(minui_backend* backend __unused) {
     return gr_draw;
 }
 
-static void fbdev_exit(minui_backend* backend __unused) {
+static void fbdev_exit(minui_backend* backend __attribute__((unused))) {
     close(fb_fd);
     fb_fd = -1;
 
