@@ -1,0 +1,4 @@
+Small application to draw progress bar and logo to the screen.
+
+See os-update.h for the API.
+
