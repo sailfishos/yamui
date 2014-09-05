@@ -86,8 +86,11 @@ static gr_surface fbdev_init(minui_backend* backend) {
 
     fd = open("/dev/graphics/fb0", O_RDWR);
     if (fd < 0) {
-        perror("cannot open fb0");
-        return NULL;
+        fd = open("/dev/fb0", O_RDWR);
+        if (fd < 0) {
+            perror("cannot open fb0");
+            return NULL;
+        }
     }
 
     if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
