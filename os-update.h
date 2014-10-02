@@ -16,6 +16,13 @@ int osUpdateScreenInit();
 int loadLogo(const char* filename);
 
 /*
+ * Draw logo if one has been loaded with loadLogo.
+ * @return 0 when logo drawn successfully
+ * @return -1 if there is no logo to show
+ */
+int showLogo(void);
+
+/*
  *  Draw progress bar to the screen with logo if defined.
  *  @param percentage precentage number between 0 and 100 that is shown
  *         as a progress bar on the screen.

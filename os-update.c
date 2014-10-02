@@ -36,6 +36,28 @@ int loadLogo(const char* filename){
   return 0;
 }
 
+int showLogo()
+{
+  int fbw = gr_fb_width();
+  int fbh = gr_fb_height();
+
+  /* draw logo to middle of the screen */
+  if (logo) {
+    int logow = gr_get_width(logo);
+    int logoh = gr_get_height(logo);
+    int dx = (fbw - logow) / 2;
+    int dy = (fbh - logoh) / 2;
+
+    gr_blit(logo, 0, 0, logow, logoh, dx, dy);
+    gr_flip();
+  } else {
+    printf("No logo loaded\n");
+    return -1;
+  }
+
+  return 0;
+}
+
 void osUpdateScreenShowProgress(int percentage){
 
   int fbw = gr_fb_width();
