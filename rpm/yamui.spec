@@ -1,4 +1,4 @@
-Name:       os-update-minui
+Name:       yamui
 Summary:    Minimal UI tool for displaying simple graphical indicators
 Version:    1.0.0
 Release:    1

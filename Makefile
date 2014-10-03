@@ -1,4 +1,4 @@
-PROGRAM = os-update-minui
+PROGRAM = yamui
 C_FILES := main.c os-update.c minui/graphics.c minui/graphics_fbdev.c minui/events.c minui/resources.c
 OBJS := $(patsubst %.c, %.o, $(C_FILES))
 CC = cc

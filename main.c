@@ -26,7 +26,7 @@ static void short_help()
 
 static void print_help()
 {
-	printf("  os-update-minui - tool to display progress bar, logo, or small animation on UI\n");
+	printf("  yamui - tool to display progress bar, logo, or small animation on UI\n");
 	printf("  Usage:\n");
 	short_help();
 	printf("    IMAGE(s)   - png picture file names in /res/images without .png extension\n");
