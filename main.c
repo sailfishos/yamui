@@ -94,6 +94,7 @@ int main (int argc, char *argv[]) {
 			break;
 		case 'h':
 			print_help();
+			goto out;
 			break;
 		default:
 			printf("getopt returned character code 0%o\n", c);
@@ -118,7 +119,7 @@ int main (int argc, char *argv[]) {
 		if (ret) {
 			printf("Image \"%s\" not found in /res/images/\n",
 								images[0]);
-			goto out;
+			goto cleanup;
 		}
 		showLogo();
 		if (stop_ms)
@@ -126,7 +127,7 @@ int main (int argc, char *argv[]) {
 		else
 			select(0, NULL, NULL, NULL, NULL);
 
-		goto out;
+		goto cleanup;
 	}
 
 	if (image_count <= 1 && progress_ms) {
@@ -138,12 +139,12 @@ int main (int argc, char *argv[]) {
 			usleep(1000 * progress_ms / 100);
 			i++;
 		}
-		goto out;
+		goto cleanup;
 	}
 
 	if (image_count > 1 && progress_ms) {
 		printf("Can only show one image with progressbar\n");
-		goto out;
+		goto cleanup;
 	}
 
 	if (animate_ms) {
@@ -153,7 +154,7 @@ int main (int argc, char *argv[]) {
 
 		if (image_count < 2) {
 			printf("Animating requires at least 2 images\n");
-			goto out;
+			goto cleanup;
 		}
 		if (stop_ms)
 			never_stop = false;
@@ -166,7 +167,7 @@ int main (int argc, char *argv[]) {
 			if (ret) {
 				printf("\"%s\" not found in /res/images/\n",
 								images[i]);
-				goto out;
+				goto cleanup;
 			}
 
 			showLogo();
@@ -175,7 +176,7 @@ int main (int argc, char *argv[]) {
 			i++;
 			i = i % image_count;
 		}
-		goto out;
+		goto cleanup;
 	}
 
 	if (text) {
@@ -183,13 +184,12 @@ int main (int argc, char *argv[]) {
 			usleep(1000 * stop_ms);
 		else
 			select(0, NULL, NULL, NULL, NULL);
-		goto out;
+		goto cleanup;
 	}
 
-out:
-
+cleanup:
 	osUpdateScreenExit();
-
+out:
 	return ret;
 }
 
