@@ -8,6 +8,7 @@ all: $(PROGRAM)
 $(PROGRAM): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(PROGRAM)
 install: all
+	strip $(PROGRAM)
 	install -m 755 -D $(PROGRAM) $(DESTDIR)/usr/bin/$(PROGRAM)
 clean:
 	rm -f *.o minui/*.o
