@@ -19,6 +19,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -250,7 +251,7 @@ int res_create_multi_display_surface(const char* name, int* frames, gr_surface**
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
     png_uint_32 width, height;
-    png_byte channels;
+    png_byte channels = 0;
     int i;
     FILE* fp = NULL;
 
@@ -258,7 +259,7 @@ int res_create_multi_display_surface(const char* name, int* frames, gr_surface**
     *frames = -1;
 
     result = open_png(name, &png_ptr, &info_ptr, &fp, &width, &height,
-                                                             channels);
+                                                             &channels);
     if (result < 0) return result;
 
     *frames = 1;
@@ -275,7 +276,7 @@ int res_create_multi_display_surface(const char* name, int* frames, gr_surface**
     }
 
     if (height % *frames != 0) {
-        printf("bad height (%d) for frame count (%d)\n", height, *frames);
+        printf("bad height (%ld) for frame count (%d)\n", height, *frames);
         result = -9;
         goto exit;
     }
@@ -419,11 +420,10 @@ int res_create_localized_alpha_surface(const char* name,
         png_read_row(png_ptr, row, NULL);
         int w = (row[1] << 8) | row[0];
         int h = (row[3] << 8) | row[2];
-        int len = row[4];
         char* loc = (char*)row+5;
 
         if (y+1+h >= height || matches_locale(loc, locale)) {
-            printf("  %20s: %s (%d x %d @ %d)\n", name, loc, w, h, y);
+            printf("  %20s: %s (%d x %d @ %ld)\n", name, loc, w, h, y);
 
             surface = malloc_surface(w*h);
             if (surface == NULL) {

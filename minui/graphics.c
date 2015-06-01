@@ -20,6 +20,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <sys/ioctl.h>
 #include <sys/mman.h>
