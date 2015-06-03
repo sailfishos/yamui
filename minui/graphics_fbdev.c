@@ -119,13 +119,44 @@ static gr_surface fbdev_init(minui_backend* backend) {
 
     printf("fb0 reports (possibly inaccurate):\n"
            "  vi.bits_per_pixel = %d\n"
+           "  vi.colorspace = %d\n"
+           "  vi.grayscale = %d\n"
+           "  vi.nonstd = %d\n"
+           "  fi.type = %d\n"
+	   "  fi.capabilities = %d\n"
            "  vi.red.offset   = %3d   .length = %3d\n"
            "  vi.green.offset = %3d   .length = %3d\n"
-           "  vi.blue.offset  = %3d   .length = %3d\n",
+           "  vi.blue.offset  = %3d   .length = %3d\n"
+	   "  vi.alpha.offset = %3d   .length = %3d\n",
            vi.bits_per_pixel,
+	   vi.colorspace,
+	   vi.grayscale,
+	   vi.nonstd,
+	   fi.type, fi.capabilities,
            vi.red.offset, vi.red.length,
            vi.green.offset, vi.green.length,
-           vi.blue.offset, vi.blue.length);
+           vi.blue.offset, vi.blue.length,
+           vi.transp.offset, vi.transp.length);
+
+    /* sometimes the framebuffer device needs to be told what
+       we really expect it to be which is RGBA
+    */
+    vi.red.offset     = 0;
+    vi.red.length     = 8;
+    vi.green.offset   = 8;
+    vi.green.length   = 8;
+    vi.blue.offset    = 16;
+    vi.blue.length    = 8;
+    vi.transp.offset  = 24;
+    vi.transp.length  = 8;
+
+
+    if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+        perror("failed to put fb0 info");
+        close(fd);
+        return NULL;
+    }
+
 
     bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (bits == MAP_FAILED) {
@@ -180,18 +211,43 @@ static gr_surface fbdev_init(minui_backend* backend) {
 }
 
 static gr_surface fbdev_flip(minui_backend* backend __attribute__((unused))) {
-
+/* the framebuffer does not always switch to the selected mode, so let's
+   keep these work-arounds in mind */
 #if defined(RECOVERY_BGRA)
-        // In case of BGRA, do some byte swapping
+	// In case of BGRA, do some byte swapping
+	unsigned int idx;
+	unsigned char tmp;
+	unsigned char* ucfb_vaddr = (unsigned char*)gr_draw->data;
+	for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
+	idx += 4) {
+	tmp = ucfb_vaddr[idx];
+	ucfb_vaddr[idx ] = ucfb_vaddr[idx + 2];
+	ucfb_vaddr[idx + 2] = tmp;
+	}
+#endif
+
+#if defined(RECOVERY_ARGB)
+	// In case of ARGB, do some byte swapping
+	unsigned int idx;
+	unsigned char tmp;
+	unsigned char* ucfb_vaddr = (unsigned char*)gr_draw->data;
+	for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes); idx += 4) {
+		tmp = ucfb_vaddr[idx];
+		ucfb_vaddr[idx ] = ucfb_vaddr[idx + 1];
+		ucfb_vaddr[idx + 1] = ucfb_vaddr[idx + 2];
+		ucfb_vaddr[idx + 2] = ucfb_vaddr[idx + 3];
+		ucfb_vaddr[idx + 3] = tmp;
+	}
+#endif
+
+#if defined(RECOVERY_ALPHA)
+	/* we sometimes really need to set an alpha channel */
         unsigned int idx;
-        unsigned char tmp;
         unsigned char* ucfb_vaddr = (unsigned char*)gr_draw->data;
-        for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
-                idx += 4) {
-            tmp = ucfb_vaddr[idx];
-            ucfb_vaddr[idx    ] = ucfb_vaddr[idx + 2];
-            ucfb_vaddr[idx + 2] = tmp;
-        }
+        for (idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes); idx += 4) {
+                ucfb_vaddr[idx+3] = 0xff;
+	}
+
 #endif
 
     if (double_buffered) {
