@@ -150,11 +150,9 @@ static gr_surface fbdev_init(minui_backend* backend) {
     vi.transp.offset  = 24;
     vi.transp.length  = 8;
 
-
+    /* this might fail on some devices, without actually causing issues */
     if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-        perror("failed to put fb0 info");
-        close(fd);
-        return NULL;
+        perror("failed to put fb0 info, continuing nonetheless.");
     }
 
 
