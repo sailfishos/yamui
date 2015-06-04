@@ -84,6 +84,7 @@ static gr_surface fbdev_init(minui_backend* backend) {
     void *bits;
 
     struct fb_fix_screeninfo fi;
+    struct fb_var_screeninfo vi2;
 
     fd = open("/dev/graphics/fb0", O_RDWR);
     if (fd < 0) {
@@ -141,18 +142,20 @@ static gr_surface fbdev_init(minui_backend* backend) {
     /* sometimes the framebuffer device needs to be told what
        we really expect it to be which is RGBA
     */
-    vi.red.offset     = 0;
-    vi.red.length     = 8;
-    vi.green.offset   = 8;
-    vi.green.length   = 8;
-    vi.blue.offset    = 16;
-    vi.blue.length    = 8;
-    vi.transp.offset  = 24;
-    vi.transp.length  = 8;
+    ioctl(fd, FBIOGET_VSCREENINFO, &vi2);
+    vi2.red.offset     = 0;
+    vi2.red.length     = 8;
+    vi2.green.offset   = 8;
+    vi2.green.length   = 8;
+    vi2.blue.offset    = 16;
+    vi2.blue.length    = 8;
+    vi2.transp.offset  = 24;
+    vi2.transp.length  = 8;
 
     /* this might fail on some devices, without actually causing issues */
-    if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-        perror("failed to put fb0 info, continuing nonetheless.");
+    if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi2) < 0) {
+        perror("failed to put fb0 info, restoring old one.");
+	ioctl(fd, FBIOPUT_VSCREENINFO, &vi);
     }
 
 
