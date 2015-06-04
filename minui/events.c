@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/poll.h>
 
 #include <linux/input.h>
@@ -123,7 +125,6 @@ int ev_wait(int timeout)
 void ev_dispatch(void)
 {
     unsigned n;
-    int ret;
 
     for (n = 0; n < ev_count; n++) {
         ev_callback cb = ev_fdinfo[n].cb;
