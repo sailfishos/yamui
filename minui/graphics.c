@@ -302,55 +302,6 @@ static void gr_init_font(void)
     }
 }
 
-#if 0
-// Exercises many of the gr_*() functions; useful for testing.
-static void gr_test() {
-    GRSurface** images;
-    int frames;
-    int result = res_create_multi_surface("icon_installing", &frames, &images);
-    if (result < 0) {
-        printf("create surface %d\n", result);
-        gr_exit();
-        return;
-    }
-
-    time_t start = time(NULL);
-    int x;
-    for (x = 0; x <= 1200; ++x) {
-        if (x < 400) {
-            gr_color(0, 0, 0, 255);
-        } else {
-            gr_color(0, (x-400)%128, 0, 255);
-        }
-        gr_clear();
-
-        gr_color(255, 0, 0, 255);
-        gr_surface frame = images[x%frames];
-        gr_blit(frame, 0, 0, frame->width, frame->height, x, 0);
-
-        gr_color(255, 0, 0, 128);
-        gr_fill(400, 150, 600, 350);
-
-        gr_color(255, 255, 255, 255);
-        gr_text(500, 225, "hello, world!", 0);
-        gr_color(255, 255, 0, 128);
-        gr_text(300+x, 275, "pack my box with five dozen liquor jugs", 1);
-
-        gr_color(0, 0, 255, 128);
-        gr_fill(gr_draw->width - 200 - x, 300, gr_draw->width - x, 500);
-
-        gr_draw = gr_backend->flip(gr_backend);
-    }
-    printf("getting end time\n");
-    time_t end = time(NULL);
-    printf("got end time\n");
-    printf("start %ld end %ld\n", (long)start, (long)end);
-    if (end > start) {
-        printf("%.2f fps\n", ((double)x) / (end-start));
-    }
-}
-#endif
-
 void gr_flip() {
     gr_draw = gr_backend->flip(gr_backend);
 }
