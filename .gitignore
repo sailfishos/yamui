@@ -1,2 +1,5 @@
 *.o
-os-update-minui
+RPMS
+yamui
+yamui-screensaverd
+documentation.list
