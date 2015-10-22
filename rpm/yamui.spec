@@ -25,4 +25,5 @@ make
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
+%{_bindir}/yamui-powerkey
 %{_bindir}/yamui-screensaverd

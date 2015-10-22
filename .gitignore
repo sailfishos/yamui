@@ -1,5 +1,6 @@
 *.o
 RPMS
 yamui
+yamui-powerkey
 yamui-screensaverd
 documentation.list
