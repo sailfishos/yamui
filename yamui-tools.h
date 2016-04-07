@@ -19,6 +19,7 @@
 #define _YAMUI_TOOLS_H_
 
 #include <stdio.h>
+
 #include <linux/input.h>
 
 #define UNUSED	__attribute__((unused))

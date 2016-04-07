@@ -27,10 +27,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <linux/input.h>
+
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/select.h>
+
+#include <linux/input.h>
 
 /*#define DEBUG*/
 #include "yamui-tools.h"

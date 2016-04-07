@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#define _BSD_SOURCE
+
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
@@ -23,9 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <linux/input.h>
+
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <linux/input.h>
 
 #include "yamui-tools.h"
 

@@ -2,7 +2,7 @@ PROGRAM = yamui
 C_FILES := main.c os-update.c minui/graphics.c minui/graphics_fbdev.c minui/events.c minui/resources.c
 OBJS := $(patsubst %.c, %.o, $(C_FILES))
 CC = cc
-CFLAGS = -Wall -DOVERSCAN_PERCENT=0 -I/usr/include/ -O2
+CFLAGS = -Wall -DOVERSCAN_PERCENT=0 -I/usr/include/ -O2 -W -ansi
 LDFLAGS = -lpng -lc -lz -lm
 
 OBJS_COMMON := yamui-tools.o
