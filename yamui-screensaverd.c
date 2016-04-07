@@ -37,7 +37,6 @@
 /*#define DEBUG*/
 #include "yamui-tools.h"
 
-#define UNUSED			__attribute__((unused))
 #define NBITS(x)		((((x) - 1) / __BITS_PER_LONG) + 1)
 #define BIT(arr, bit)		((arr[(bit) / __BITS_PER_LONG] >> \
 				 ((bit) % __BITS_PER_LONG)) & 1)

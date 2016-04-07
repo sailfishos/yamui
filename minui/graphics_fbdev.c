@@ -31,6 +31,7 @@
 
 #include "minui.h"
 #include "graphics.h"
+#include "../yamui-tools.h"
 
 static gr_surface fbdev_init(minui_backend *);
 static gr_surface fbdev_flip(minui_backend *);
@@ -63,7 +64,7 @@ open_fbdev(void)
 /* ------------------------------------------------------------------------ */
 
 static void
-fbdev_blank(minui_backend *backend __attribute__((unused)), bool blank)
+fbdev_blank(minui_backend *backend UNUSED, bool blank)
 {
 	int ret;
 
@@ -227,7 +228,7 @@ fbdev_init(minui_backend *backend)
 /* ------------------------------------------------------------------------ */
 
 static gr_surface
-fbdev_flip(minui_backend *backend __attribute__((unused)))
+fbdev_flip(minui_backend *backend UNUSED)
 {
 	/* the framebuffer does not always switch to the selected mode,
 	 * so let's keep these work-arounds in mind */
@@ -287,7 +288,7 @@ fbdev_flip(minui_backend *backend __attribute__((unused)))
 /* ------------------------------------------------------------------------ */
 
 static void
-fbdev_exit(minui_backend *backend __attribute__((unused)))
+fbdev_exit(minui_backend *backend UNUSED)
 {
 	close(fb_fd);
 	fb_fd = -1;
