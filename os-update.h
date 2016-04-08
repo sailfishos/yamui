@@ -1,19 +1,21 @@
+#ifndef _OS_UPDATE_H_
+#define _OS_UPDATE_H_
 
-/* Initializes the minui 
+/* Initializes the minui
  *
  * @return 0 when successfull
  * @return -1 when init fails, in this case anything below shouldn't be used.
  */
-int osUpdateScreenInit();
+int osUpdateScreenInit(void);
 
-/* 
- * Loads logo and overrides the old logo if already loaded. 
- * @param filename of the file located in /res/images/ without extension or path
- *        e.g. /res/images/logo.png => logo
+/*
+ * Loads logo and overrides the old logo if already loaded.
+ * @param filename of the file located in /res/images/ without extension or
+ *         path e.g. /res/images/logo.png => logo
  * @return 0 when loading successful
  * @return -1 when loading fails
  */
-int loadLogo(const char* filename);
+int loadLogo(const char *filename);
 
 /*
  * Draw logo if one has been loaded with loadLogo.
@@ -30,5 +32,6 @@ int showLogo(void);
 void osUpdateScreenShowProgress(int percentage);
 
 /* Should be called before ending application, to free memory etc. */
-void osUpdateScreenExit();
+void osUpdateScreenExit(void);
 
+#endif /* _OS_UPDATE_H_ */

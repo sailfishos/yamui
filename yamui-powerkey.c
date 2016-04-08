@@ -32,10 +32,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <linux/input.h>
+
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/select.h>
+
+#include <linux/input.h>
 
 /*#define DEBUG*/
 #include "yamui-tools.h"
@@ -227,23 +229,22 @@ main(int argc, char *argv[])
 
 	while ((opt = getopt(argc, argv, "d:hu")) != -1) {
 		switch (opt) {
-			case 'd':
-				duration = atoi(optarg);
-				if ((duration = atoi(optarg)) < 1) {
-					printf("Duration value must be "
-					       "positive.\n");
-					usage();
-					return EXIT_FAILURE;
-				}
-
-				break;
-			case 'u':
-				wait_key_up = true;
-				break;
-			case 'h':
-			default:
+		case 'd':
+			duration = atoi(optarg);
+			if ((duration = atoi(optarg)) < 1) {
+				printf("Duration value must be positive.\n");
 				usage();
 				return EXIT_FAILURE;
+			}
+
+			break;
+		case 'u':
+			wait_key_up = true;
+			break;
+		case 'h':
+		default:
+			usage();
+			return EXIT_FAILURE;
 		}
 	}
 

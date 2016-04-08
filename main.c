@@ -1,12 +1,14 @@
-#include "minui/minui.h"
-#include "os-update.h"
+#define _BSD_SOURCE	700
 
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <sys/select.h>
+
+#include "os-update.h"
+#include "minui/minui.h"
 
 #define IMAGES_MAX	30
 
@@ -19,18 +21,25 @@ static struct option options[] = {
 	{0, 0, 0, 0},
 };
 
-static void short_help()
+/* ------------------------------------------------------------------------ */
+
+static void
+short_help(void)
 {
 	printf("  os-update-minui [OPTIONS] [IMAGE(s)]\n");
 }
 
-static void print_help()
+/* ------------------------------------------------------------------------ */
+
+static void
+print_help(void)
 {
 	printf("  yamui - tool to display progress bar, logo, or small animation on UI\n");
 	printf("  Usage:\n");
 	short_help();
 	printf("    IMAGE(s)   - png picture file names in /res/images without .png extension\n");
-	printf("                 NOTE: currently maximum of %d pictures supported\n", IMAGES_MAX);
+	printf("                 NOTE: currently maximum of %d pictures supported\n",
+	       IMAGES_MAX);
 	printf("\n  OPTIONS:\n");
 	printf("  --animate=PERIOD, -a PERIOD\n");
 	printf("         Show IMAGEs (at least 2) in rotation over PERIOD ms\n");
@@ -44,8 +53,11 @@ static void print_help()
 	printf("         Print this help\n");
 }
 
+/* ------------------------------------------------------------------------ */
+
 /* Add text to both sides of the "flip" */
-static void add_text(char *text)
+static void
+add_text(char *text)
 {
 	int i = 0;
 	if (!text)
@@ -58,7 +70,11 @@ static void add_text(char *text)
 	}
 }
 
-int main (int argc, char *argv[]) {
+/* ------------------------------------------------------------------------ */
+
+int
+main(int argc, char *argv[])
+{
 	int c, option_index;
 	unsigned long int animate_ms = 0;
 	unsigned long long int stop_ms = 0;
@@ -71,7 +87,7 @@ int main (int argc, char *argv[]) {
 
 	while (1) {
 		c = getopt_long(argc, argv, "a:p:s:t:h", options,
-								&option_index);
+				&option_index);
 		if (c == -1)
 			break;
 
@@ -104,7 +120,6 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
-
 	while (optind < argc && image_count < IMAGES_MAX)
 		images[image_count++] = argv[optind++];
 
@@ -118,9 +133,10 @@ int main (int argc, char *argv[]) {
 		ret = loadLogo(images[0]);
 		if (ret) {
 			printf("Image \"%s\" not found in /res/images/\n",
-								images[0]);
+			       images[0]);
 			goto cleanup;
 		}
+
 		showLogo();
 		if (stop_ms)
 			usleep(stop_ms * 1000);
@@ -139,6 +155,7 @@ int main (int argc, char *argv[]) {
 			usleep(1000 * progress_ms / 100);
 			i++;
 		}
+
 		goto cleanup;
 	}
 
@@ -156,6 +173,7 @@ int main (int argc, char *argv[]) {
 			printf("Animating requires at least 2 images\n");
 			goto cleanup;
 		}
+
 		if (stop_ms)
 			never_stop = false;
 		else
@@ -166,7 +184,7 @@ int main (int argc, char *argv[]) {
 			ret = loadLogo(images[i]);
 			if (ret) {
 				printf("\"%s\" not found in /res/images/\n",
-								images[i]);
+				       images[i]);
 				goto cleanup;
 			}
 
@@ -176,6 +194,7 @@ int main (int argc, char *argv[]) {
 			i++;
 			i = i % image_count;
 		}
+
 		goto cleanup;
 	}
 
@@ -192,4 +211,3 @@ cleanup:
 out:
 	return ret;
 }
-

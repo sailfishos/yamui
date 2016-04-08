@@ -1,6 +1,6 @@
 Name:       yamui
 Summary:    Minimal UI tool for displaying simple graphical indicators
-Version:    1.0.3
+Version:    1.0.6
 Release:    1
 Url:        https://github.com/sailfishos/yamui.git
 Group:      System/Boot
