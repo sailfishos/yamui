@@ -36,6 +36,7 @@
 
 /*#define DEBUG*/
 #include "yamui-tools.h"
+#include "minui/minui.h"
 
 #define NBITS(x)		((((x) - 1) / __BITS_PER_LONG) + 1)
 #define BIT(arr, bit)		((arr[(bit) / __BITS_PER_LONG] >> \
@@ -122,12 +123,18 @@ static display_state_t display_state = state_unknown;
 static int
 turn_display_on(void)
 {
+	int ret;
+
 	if (display_state == state_on)
 		return 0;
 
 	debugf("Turning display on.");
 	display_state = state_on;
-	return sysfs_write_int(DISPLAY_CONTROL, 0);
+	ret = sysfs_write_int(DISPLAY_CONTROL, 0);
+#ifdef __arm__
+	gr_restore(); /* Qualcomm specific. TODO: implement generic solution. */
+#endif /* __arm__ */
+	return ret;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -140,6 +147,9 @@ turn_display_off(void)
 
 	debugf("Turning display off.");
 	display_state = state_off;
+#ifdef __arm__
+	gr_save(); /* Qualcomm specific. TODO: implement generic solution. */
+#endif /* __arm__ */
 	return sysfs_write_int(DISPLAY_CONTROL, 1);
 }
 
@@ -160,6 +170,15 @@ main(void)
 
 	if (open_fds(fds, &num_fds, MAX_DEVICES, check_device_type) == -1)
 		return EXIT_FAILURE;
+
+#ifdef __arm__
+	/* Qualcomm specific. TODO: implement generic solution. */
+	if (gr_init(false)) {
+		errorf("Failed gr_init().\n");
+		close_fds(fds, num_fds);
+		return EXIT_FAILURE;
+	}
+#endif /* __arm__ */
 
 	debugf("Started");
 	signal(SIGINT,  signal_handler);
@@ -210,6 +229,9 @@ main(void)
 	}
 
 	turn_display_on();
+#ifdef __arm__
+	gr_exit(); /* Qualcomm specific. TODO: implement generic solution. */
+#endif /* __arm__ */
 	close_fds(fds, num_fds);
 	debugf("Terminated");
 	return ret;

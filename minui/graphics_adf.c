@@ -27,6 +27,7 @@
 #include <sys/cdefs.h>
 
 #include "graphics.h"
+#include "../yamui-tools.h"
 
 struct adf_surface_pdata {
 	GRSurface base;
@@ -153,7 +154,7 @@ adf_device_init(struct adf_pdata *pdata, struct adf_device *dev)
 /* ------------------------------------------------------------------------ */
 
 static gr_surface
-adf_init(minui_backend *backend)
+adf_init(minui_backend *backend, bool blank UNUSED)
 {
 	struct adf_pdata *pdata = (struct adf_pdata *)backend;
 	adf_id_t *dev_ids = NULL;
@@ -281,9 +282,11 @@ open_adf(void)
 		return NULL;
 	}
 
-	pdata->base.init  = adf_init;
-	pdata->base.flip  = adf_flip;
-	pdata->base.blank = adf_blank;
-	pdata->base.exit  = adf_exit;
+	pdata->base.init    = adf_init;
+	pdata->base.flip    = adf_flip;
+	pdata->base.blank   = adf_blank;
+	pdata->base.exit    = adf_exit;
+	pdata->base.save    = NULL;
+	pdata->base.restore = NULL;
 	return &pdata->base;
 }

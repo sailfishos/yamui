@@ -1,5 +1,6 @@
 PROGRAM = yamui
-C_FILES := main.c os-update.c minui/graphics.c minui/graphics_fbdev.c minui/events.c minui/resources.c
+MINUI_C_FILES := minui/graphics.c minui/graphics_fbdev.c minui/events.c minui/resources.c
+C_FILES := main.c os-update.c $(MINUI_C_FILES)
 OBJS := $(patsubst %.c, %.o, $(C_FILES))
 CC = cc
 CFLAGS = -Wall -DOVERSCAN_PERCENT=0 -I/usr/include/ -O2 -W -ansi
@@ -9,7 +10,7 @@ OBJS_COMMON := yamui-tools.o
 
 SCREENSAVERD = yamui-screensaverd
 CFLAGS_SCREENSAVERD = -W -Wall -ansi -pedantic -O2
-C_FILES_SCREENSAVERD := yamui-screensaverd.c
+C_FILES_SCREENSAVERD := yamui-screensaverd.c $(MINUI_C_FILES)
 OBJS_SCREENSAVERD := $(patsubst %.c, %.o, $(C_FILES_SCREENSAVERD))
 
 POWERKEY = yamui-powerkey
@@ -23,7 +24,7 @@ $(PROGRAM): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(PROGRAM)
 
 $(SCREENSAVERD): $(OBJS_SCREENSAVERD) $(OBJS_COMMON)
-	$(CC) $(CFLAGS_SCREENSAVERD) $(OBJS_SCREENSAVERD) $(OBJS_COMMON) -o $(SCREENSAVERD)
+	$(CC) $(CFLAGS_SCREENSAVERD) $(OBJS_SCREENSAVERD) $(OBJS_COMMON) $(LDFLAGS) -o $(SCREENSAVERD)
 
 $(POWERKEY): $(OBJS_POWERKEY) $(OBJS_COMMON)
 	$(CC) $(CFLAGS_POWERKEY) $(OBJS_POWERKEY) $(OBJS_COMMON) -o $(POWERKEY)
@@ -35,4 +36,4 @@ install: all
 	install -m 755 -D $(POWERKEY) $(DESTDIR)/usr/bin/$(POWERKEY)
 
 clean:
-	rm -f *.o minui/*.o
+	rm -f *.o minui/*.o $(PROGRAM) $(SCREENSAVERD) $(POWERKEY)

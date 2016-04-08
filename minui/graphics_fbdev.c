@@ -33,10 +33,12 @@
 #include "graphics.h"
 #include "../yamui-tools.h"
 
-static gr_surface fbdev_init(minui_backend *);
+static gr_surface fbdev_init(minui_backend *, bool);
 static gr_surface fbdev_flip(minui_backend *);
 static void fbdev_blank(minui_backend *, bool);
 static void fbdev_exit(minui_backend *);
+static void fbdev_save(minui_backend *);
+static void fbdev_restore(minui_backend *);
 
 static GRSurface gr_framebuffer[2];
 static bool double_buffered;
@@ -47,10 +49,12 @@ static struct fb_var_screeninfo vi;
 static int fb_fd = -1;
 
 static minui_backend my_backend = {
-	.init  = fbdev_init,
-	.flip  = fbdev_flip,
-	.blank = fbdev_blank,
-	.exit  = fbdev_exit,
+	.init    = fbdev_init,
+	.flip    = fbdev_flip,
+	.blank   = fbdev_blank,
+	.exit    = fbdev_exit,
+	.save    = fbdev_save,
+	.restore = fbdev_restore,
 };
 
 /* ------------------------------------------------------------------------ */
@@ -94,7 +98,7 @@ set_displayed_framebuffer(unsigned n)
 /* ------------------------------------------------------------------------ */
 
 static gr_surface
-fbdev_init(minui_backend *backend)
+fbdev_init(minui_backend *backend, bool blank)
 {
 	int fd;
 	void *bits;
@@ -181,8 +185,10 @@ fbdev_init(minui_backend *backend)
 	gr_framebuffer[0].row_bytes = fi.line_length;
 	gr_framebuffer[0].pixel_bytes = vi.bits_per_pixel / 8;
 	gr_framebuffer[0].data = bits;
-	memset(gr_framebuffer[0].data, 0,
-	       gr_framebuffer[0].height * gr_framebuffer[0].row_bytes);
+	if (blank)
+		memset(gr_framebuffer[0].data, 0,
+		       gr_framebuffer[0].height *
+		       gr_framebuffer[0].row_bytes);
 
 	/* check if we can use double buffering */
 	if (vi.yres * fi.line_length * 2 <= fi.smem_len) {
@@ -212,15 +218,20 @@ fbdev_init(minui_backend *backend)
 		}
 	}
 
-	memset(gr_draw->data, 0, gr_draw->height * gr_draw->row_bytes);
+	if (blank || !double_buffered)
+		memset(gr_draw->data, 0,
+		       gr_draw->height * gr_draw->row_bytes);
+
 	fb_fd = fd;
 	set_displayed_framebuffer(0);
 
 	printf("framebuffer: %d (%d x %d)\n", fb_fd, gr_draw->width,
 	       gr_draw->height);
 
-	fbdev_blank(backend, true);
-	fbdev_blank(backend, false);
+	if (blank) {
+		fbdev_blank(backend, true);
+		fbdev_blank(backend, false);
+	}
 
 	return gr_draw;
 }
@@ -299,4 +310,64 @@ fbdev_exit(minui_backend *backend UNUSED)
 	}
 
 	gr_draw = NULL;
+}
+
+/* ------------------------------------------------------------------------ */
+
+static void *save_buf[2] = { NULL, NULL };
+
+static void
+fbdev_save(minui_backend *backend UNUSED)
+{
+	/* To prevent memory leak in a case when fbdev_save() was called
+	 * several times without calling of fbdev_restore(). */
+	if (save_buf[0])
+		return;
+
+	if (!(save_buf[0] = malloc(gr_draw->height * gr_draw->row_bytes))) {
+		perror("Failed to allocate memory.");
+		return;
+	}
+
+	memcpy(save_buf[0], gr_framebuffer[0].data,
+	       gr_draw->height * gr_draw->row_bytes);
+
+	if (double_buffered) {
+		if (!(save_buf[1] =
+			      malloc(gr_draw->height * gr_draw->row_bytes))) {
+			perror("Failed to allocate memory.");
+			/* Don't freeing save_buf[0] here since we have saved
+			 * successfully it. */
+			return;
+		}
+
+		memcpy(save_buf[1], gr_framebuffer[1].data,
+		       gr_draw->height * gr_draw->row_bytes);
+	}
+}
+
+/* ------------------------------------------------------------------------ */
+
+static void
+fbdev_restore(minui_backend *backend)
+{
+	fbdev_blank(backend, false);
+
+	if (save_buf[0]) {
+		memcpy(gr_framebuffer[0].data, save_buf[0],
+		       gr_draw->height * gr_draw->row_bytes);
+		free(save_buf[0]);
+		save_buf[0] = NULL;
+	}
+
+	if (save_buf[1]) {
+		memcpy(gr_framebuffer[1].data, save_buf[1],
+		       gr_draw->height * gr_draw->row_bytes);
+		free(save_buf[1]);
+		save_buf[1] = NULL;
+	}
+
+	fbdev_flip(backend);
+	if (double_buffered)
+		fbdev_flip(backend);
 }

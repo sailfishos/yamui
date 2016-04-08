@@ -398,7 +398,7 @@ gr_flip(void)
 /* ------------------------------------------------------------------------ */
 
 int
-gr_init(void)
+gr_init(bool blank)
 {
 	gr_init_font();
 
@@ -415,7 +415,7 @@ gr_init(void)
 /*
 	gr_backend = open_adf();
 	if (gr_backend) {
-		gr_draw = gr_backend->init(gr_backend);
+		gr_draw = gr_backend->init(gr_backend, blank);
 		if (!gr_draw)
 			gr_backend->exit(gr_backend);
 	}
@@ -423,7 +423,7 @@ gr_init(void)
 	if (!gr_draw) {
 */
 	gr_backend = open_fbdev();
-	gr_draw = gr_backend->init(gr_backend);
+	gr_draw = gr_backend->init(gr_backend, blank);
 	if (!gr_draw)
 		return -1;
 /*
@@ -472,4 +472,24 @@ void
 gr_fb_blank(bool blank)
 {
 	gr_backend->blank(gr_backend, blank);
+}
+
+/* ------------------------------------------------------------------------ */
+
+/* Save screen content to internal buffer. */
+void
+gr_save(void)
+{
+	if (gr_backend->save)
+		gr_backend->save(gr_backend);
+}
+
+/* ------------------------------------------------------------------------ */
+
+/* Restore screen content from internal buffer. */
+void
+gr_restore(void)
+{
+	if (gr_backend->restore)
+		gr_backend->restore(gr_backend);
 }

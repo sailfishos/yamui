@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "os-update.h"
 #include "minui/minui.h"
@@ -15,7 +16,7 @@ gr_surface logo;
 int
 osUpdateScreenInit(void)
 {
-	if (gr_init()) {
+	if (gr_init(true)) {
 		printf("Failed gr_init!\n");
 		return -1;
 	}

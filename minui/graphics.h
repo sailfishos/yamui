@@ -27,7 +27,7 @@ extern "C" {
 
 typedef struct minui_backend {
 	/* Initializes the backend and returns a gr_surface to draw into. */
-	gr_surface (*init)(struct minui_backend *backend);
+	gr_surface (*init)(struct minui_backend *backend, bool blank);
 
 	/* Causes the current drawing surface (returned by the most recent
 	 * call to flip() or init()) to be displayed, and returns a new
@@ -39,6 +39,12 @@ typedef struct minui_backend {
 
 	/* Device cleanup when drawing is done. */
 	void (*exit)(struct minui_backend *backend);
+
+	/* Save screen content to internal buffer. */
+	void (*save)(struct minui_backend *backend);
+
+	/* Restore screen content from internal buffer. */
+	void (*restore)(struct minui_backend *backend);
 } minui_backend;
 
 minui_backend *open_fbdev(void);
