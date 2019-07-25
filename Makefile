@@ -1,10 +1,10 @@
 PROGRAM = yamui
-MINUI_C_FILES := minui/graphics.c minui/graphics_fbdev.c minui/events.c minui/resources.c
+MINUI_C_FILES := minui/graphics.c minui/graphics_fbdev.c minui/events.c minui/resources.c minui/graphics_drm.c
 C_FILES := main.c os-update.c $(MINUI_C_FILES)
 OBJS := $(patsubst %.c, %.o, $(C_FILES))
 CC = cc
-CFLAGS = -Wall -DOVERSCAN_PERCENT=0 -I/usr/include/ -O2 -W -ansi
-LDFLAGS = -lpng -lc -lz -lm
+CFLAGS = -Wall -DOVERSCAN_PERCENT=0 -I/usr/include/ -O2 -W -ansi `pkg-config --cflags libdrm`
+LDFLAGS = -lpng -lc -lz -lm `pkg-config --libs libdrm`
 
 OBJS_COMMON := yamui-tools.o
 
