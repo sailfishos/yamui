@@ -132,7 +132,9 @@ turn_display_on(void)
 	display_state = state_on;
 	ret = sysfs_write_int(DISPLAY_CONTROL, 0);
 #ifdef __arm__
-	gr_restore(); /* Qualcomm specific. TODO: implement generic solution. */
+	if (have_fb0) {
+		gr_restore(); /* Qualcomm specific. TODO: implement generic solution. */
+	}
 #endif /* __arm__ */
 	return ret;
 }
@@ -148,7 +150,9 @@ turn_display_off(void)
 	debugf("Turning display off.");
 	display_state = state_off;
 #ifdef __arm__
-	gr_save(); /* Qualcomm specific. TODO: implement generic solution. */
+	if (have_fb0) {
+		gr_save(); /* Qualcomm specific. TODO: implement generic solution. */
+	}
 #endif /* __arm__ */
 	return sysfs_write_int(DISPLAY_CONTROL, 1);
 }
@@ -171,14 +175,19 @@ main(void)
 	if (open_fds(fds, &num_fds, MAX_DEVICES, check_device_type) == -1)
 		return EXIT_FAILURE;
 
+	int have_fb0 = 0;
+	/* the drm backend doesn't support multiple clients */
+	have_fb0 = !access("/dev/fb0", F_OK) || !access("/dev/graphics/fb0", F_OK);
+	if (have_fb0) {
 #ifdef __arm__
-	/* Qualcomm specific. TODO: implement generic solution. */
-	if (gr_init(false)) {
-		errorf("Failed gr_init().\n");
-		close_fds(fds, num_fds);
-		return EXIT_FAILURE;
-	}
+		/* Qualcomm specific. TODO: implement generic solution. */
+		if (gr_init(false)) {
+			errorf("Failed gr_init().\n");
+			close_fds(fds, num_fds);
+			return EXIT_FAILURE;
+		}
 #endif /* __arm__ */
+	}
 
 	debugf("Started");
 	signal(SIGINT,  signal_handler);
@@ -230,7 +239,9 @@ main(void)
 
 	turn_display_on();
 #ifdef __arm__
-	gr_exit(); /* Qualcomm specific. TODO: implement generic solution. */
+	if (have_fb0) {
+		gr_exit(); /* Qualcomm specific. TODO: implement generic solution. */
+	}
 #endif /* __arm__ */
 	close_fds(fds, num_fds);
 	debugf("Terminated");
