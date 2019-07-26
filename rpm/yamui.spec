@@ -8,6 +8,7 @@ License:    ASL 2.0
 Source0:    %{name}-%{version}.tar.gz
 
 BuildRequires:  libpng-devel
+BuildRequires:  libdrm-devel
 
 %description
 %{summary}.

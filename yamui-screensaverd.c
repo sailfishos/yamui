@@ -43,11 +43,15 @@
 				 ((bit) % __BITS_PER_LONG)) & 1)
 
 #define DISPLAY_CONTROL		"/sys/class/graphics/fb0/blank"
+#define DISPLAY_CONTROL_DRM	"/sys/class/backlight/panel0-backlight/brightness"
 #define MAX_DEVICES		256
 #define DISPLAY_OFF_TIME	25 /* seconds */
 
 const char *app_name = "screensaverd";
 sig_atomic_t volatile running = 1;
+
+char *display_control = NULL;
+int display_control_on_value = 1024;
 
 /* ------------------------------------------------------------------------ */
 
@@ -130,8 +134,8 @@ turn_display_on(void)
 
 	debugf("Turning display on.");
 	display_state = state_on;
-	ret = sysfs_write_int(DISPLAY_CONTROL, 0);
-#ifdef __arm__
+	ret = sysfs_write_int(display_control, display_control_on_value);
+#ifdef __arm___
 	gr_restore(); /* Qualcomm specific. TODO: implement generic solution. */
 #endif /* __arm__ */
 	return ret;
@@ -150,7 +154,7 @@ turn_display_off(void)
 #ifdef __arm__
 	gr_save(); /* Qualcomm specific. TODO: implement generic solution. */
 #endif /* __arm__ */
-	return sysfs_write_int(DISPLAY_CONTROL, 1);
+	return sysfs_write_int(display_control, 0);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -171,14 +175,33 @@ main(void)
 	if (open_fds(fds, &num_fds, MAX_DEVICES, check_device_type) == -1)
 		return EXIT_FAILURE;
 
+	int have_fb0 = 0;
+	/* the drm backend doesn't support multiple clients */
+	have_fb0 = !access("/dev/fb0", F_OK) || !access("/dev/graphics/fb0", F_OK);
+	if (have_fb0) {
 #ifdef __arm__
-	/* Qualcomm specific. TODO: implement generic solution. */
-	if (gr_init(false)) {
-		errorf("Failed gr_init().\n");
-		close_fds(fds, num_fds);
-		return EXIT_FAILURE;
-	}
+		/* Qualcomm specific. TODO: implement generic solution. */
+		if (gr_init(false)) {
+			errorf("Failed gr_init().\n");
+			close_fds(fds, num_fds);
+			return EXIT_FAILURE;
+		}
 #endif /* __arm__ */
+	}
+
+	if (have_fb0) {
+		display_control = DISPLAY_CONTROL;
+	} else {
+		display_control = DISPLAY_CONTROL_DRM;
+	}
+
+	if (getenv("DISPLAY_BRIGHTNESS_PATH") != NULL) {
+		display_control = getenv("DISPLAY_BRIGHTNESS_PATH");
+	}
+
+	if (getenv("DISPLAY_BRIGHTNESS") != NULL) {
+		display_control_on_value = atoi(getenv("DISPLAY_BRIGHTNESS"));
+	}
 
 	debugf("Started");
 	signal(SIGINT,  signal_handler);
@@ -230,7 +253,9 @@ main(void)
 
 	turn_display_on();
 #ifdef __arm__
-	gr_exit(); /* Qualcomm specific. TODO: implement generic solution. */
+	if (have_fb0) {
+		gr_exit(); /* Qualcomm specific. TODO: implement generic solution. */
+	}
 #endif /* __arm__ */
 	close_fds(fds, num_fds);
 	debugf("Terminated");
