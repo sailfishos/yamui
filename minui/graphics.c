@@ -425,6 +425,12 @@ gr_init(bool blank)
 	gr_backend = open_fbdev();
 	gr_draw = gr_backend->init(gr_backend, blank);
 	if (!gr_draw) {
+		gr_backend->exit(gr_backend);
+
+		gr_backend = open_drm();
+		gr_draw = gr_backend->init(gr_backend, blank);
+		gr_backend->exit(gr_backend);
+
 		gr_backend = open_drm();
 		gr_draw = gr_backend->init(gr_backend, blank);
 		if (!gr_draw)
