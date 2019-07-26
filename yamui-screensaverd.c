@@ -43,6 +43,8 @@
 				 ((bit) % __BITS_PER_LONG)) & 1)
 
 #define DISPLAY_CONTROL		"/sys/class/graphics/fb0/blank"
+#define DISPLAY_CONTROL_DRM	"/sys/class/backlight/panel0-backlight/brightness"
+#define DISPLAY_CONTROL_DRM_MAX	"/sys/class/backlight/panel0-backlight/max_brightness"
 #define MAX_DEVICES		256
 #define DISPLAY_OFF_TIME	25 /* seconds */
 
@@ -110,6 +112,21 @@ sysfs_write_int(const char *fname, int val)
 	return 0;
 }
 
+static int
+sysfs_read_int(const char *fname, int *val)
+{
+	FILE *f;
+
+	if (!(f = fopen(fname, "r"))) {
+		errorf("Can't open \"%s\" for reading", fname);
+		return -1;
+	}
+
+	fscanf(f, "%d", val);
+	fclose(f);
+	return 0;
+}
+
 /* ------------------------------------------------------------------------ */
 
 typedef enum {
@@ -130,12 +147,14 @@ turn_display_on(void)
 
 	debugf("Turning display on.");
 	display_state = state_on;
-	ret = sysfs_write_int(DISPLAY_CONTROL, 0);
-#ifdef __arm__
 	if (have_fb0) {
+		ret = sysfs_write_int(DISPLAY_CONTROL, 0);
+#ifdef __arm__
 		gr_restore(); /* Qualcomm specific. TODO: implement generic solution. */
-	}
 #endif /* __arm__ */
+	} else {
+		ret = sysfs_write_int(DISPLAY_CONTROL_DRM, drm_max_brightness);
+	}
 	return ret;
 }
 
@@ -149,12 +168,14 @@ turn_display_off(void)
 
 	debugf("Turning display off.");
 	display_state = state_off;
-#ifdef __arm__
 	if (have_fb0) {
+#ifdef __arm__
 		gr_save(); /* Qualcomm specific. TODO: implement generic solution. */
-	}
 #endif /* __arm__ */
-	return sysfs_write_int(DISPLAY_CONTROL, 1);
+		return sysfs_write_int(DISPLAY_CONTROL, 1);
+	} else {
+		return sysfs_write_int(DISPLAY_CONTROL_DRM, 0);
+	}
 }
 
 /* ------------------------------------------------------------------------ */
