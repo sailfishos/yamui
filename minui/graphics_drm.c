@@ -34,7 +34,7 @@
 #ifndef DRM_MODE_CONNECTOR_DSI
 #define DRM_MODE_CONNECTOR_DSI 16
 #endif
-#define RECOVERY_BGRA 1
+#define RECOVERY_RGBX 1
 
 struct drm_surface {
     GRSurface base;
