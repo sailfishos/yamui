@@ -31,14 +31,14 @@ osUpdateScreenInit(void)
 /* ------------------------------------------------------------------------ */
 
 int
-loadLogo(const char *filename)
+loadLogo(const char *filename, const char *dir)
 {
 	int ret;
 
 	if (logo)
 		res_free_surface(logo);
 
-	if ((ret = res_create_display_surface(filename, &logo)) < 0) {
+	if ((ret = res_create_display_surface(filename, dir, &logo)) < 0) {
 		printf("Error while trying to load %s, retval: %i.\n",
 		       filename, ret);
 		return -1;

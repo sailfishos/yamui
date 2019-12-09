@@ -58,7 +58,7 @@ malloc_surface(size_t data_size)
 /* ------------------------------------------------------------------------ */
 
 static int
-open_png(const char *name, png_structp *png_ptr, png_infop *info_ptr,
+open_png(const char *name, const char *dir, png_structp *png_ptr, png_infop *info_ptr,
 	 FILE **fp, png_uint_32 *width, png_uint_32 *height,
 	 png_byte *channels)
 {
@@ -67,7 +67,7 @@ open_png(const char *name, png_structp *png_ptr, png_infop *info_ptr,
 	int color_type, bit_depth, result = 0;
 	size_t bytesRead;
 
-	snprintf(resPath, sizeof(resPath) - 1, "/res/images/%s.png", name);
+	snprintf(resPath, sizeof(resPath) - 1, "%s/%s.png", dir, name);
 	resPath[sizeof(resPath)-1] = '\0';
 	*fp = fopen(resPath, "rb");
 	if (*fp == NULL) {
@@ -238,7 +238,7 @@ transform_rgb_to_draw(unsigned char *input_row, unsigned char *output_row,
 /* ------------------------------------------------------------------------ */
 
 int
-res_create_display_surface(const char *name, gr_surface *pSurface)
+res_create_display_surface(const char *name, const char *dir, gr_surface *pSurface)
 {
 	int result = 0;
 	unsigned int y;
@@ -252,7 +252,7 @@ res_create_display_surface(const char *name, gr_surface *pSurface)
 
 	*pSurface = NULL;
 
-	result = open_png(name, &png_ptr, &info_ptr, &fp, &width, &height,
+	result = open_png(name, dir, &png_ptr, &info_ptr, &fp, &width, &height,
 			  &channels);
 	if (result < 0)
 		return result;
@@ -286,7 +286,7 @@ exit:
 /* ------------------------------------------------------------------------ */
 
 int
-res_create_multi_display_surface(const char *name, int *frames,
+res_create_multi_display_surface(const char *name, const char *dir, int *frames,
 				 gr_surface **pSurface)
 {
 	int i, result = 0, num_text;
@@ -303,7 +303,7 @@ res_create_multi_display_surface(const char *name, int *frames,
 	*pSurface = NULL;
 	*frames = -1;
 
-	result = open_png(name, &png_ptr, &info_ptr, &fp, &width, &height,
+	result = open_png(name, dir, &png_ptr, &info_ptr, &fp, &width, &height,
 			  &channels);
 	if (result < 0)
 		return result;
@@ -374,7 +374,7 @@ exit:
 /* ------------------------------------------------------------------------ */
 
 int
-res_create_alpha_surface(const char *name, gr_surface *pSurface)
+res_create_alpha_surface(const char *name, const char *dir, gr_surface *pSurface)
 {
 	int result = 0;
 	unsigned int y;
@@ -388,7 +388,7 @@ res_create_alpha_surface(const char *name, gr_surface *pSurface)
 
 	*pSurface = NULL;
 
-	result = open_png(name, &png_ptr, &info_ptr, &fp, &width, &height,
+	result = open_png(name, dir, &png_ptr, &info_ptr, &fp, &width, &height,
 			  &channels);
 	if (result < 0)
 		return result;
@@ -451,7 +451,7 @@ matches_locale(const char *loc, const char *locale)
 /* ------------------------------------------------------------------------ */
 
 int
-res_create_localized_alpha_surface(const char *name, const char *locale,
+res_create_localized_alpha_surface(const char *name, const char *dir, const char *locale,
 				   gr_surface *pSurface)
 {
 	int result = 0;
@@ -474,7 +474,7 @@ res_create_localized_alpha_surface(const char *name, const char *locale,
 		goto exit;
 	}
 
-	result = open_png(name, &png_ptr, &info_ptr, &fp, &width, &height,
+	result = open_png(name, dir, &png_ptr, &info_ptr, &fp, &width, &height,
 			  &channels);
 	if (result < 0)
 		return result;

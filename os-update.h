@@ -10,12 +10,13 @@ int osUpdateScreenInit(void);
 
 /*
  * Loads logo and overrides the old logo if already loaded.
- * @param filename of the file located in /res/images/ without extension or
- *         path e.g. /res/images/logo.png => logo
+ * @param filename of the file located in dir without extension or
+ *         path e.g. /res/images/logo.png => filename:logo, dir:/res/images
+ * @param dir directory with images
  * @return 0 when loading successful
  * @return -1 when loading fails
  */
-int loadLogo(const char *filename);
+int loadLogo(const char *filename, const char *dir);
 
 /*
  * Draw logo if one has been loaded with loadLogo.

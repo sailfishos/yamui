@@ -92,20 +92,20 @@ void ev_dispatch(void);
  * interpreted as an alpha mask used to render text in the current
  * color (with gr_text() or gr_texticon()).
  *
- * All these functions load PNG images from "/res/images/${name}.png". */
+ * All these functions load PNG images from "${dir}/${name}.png". */
 
 /* Load a single display surface from a PNG image. */
-int res_create_display_surface(const char *name, gr_surface *pSurface);
+int res_create_display_surface(const char *name, const char *dir, gr_surface *pSurface);
 
 /* Load an array of display surfaces from a single PNG image. The PNG
  * should have a 'Frames' text chunk whose value is the number of
  * frames this image represents. The pixel data itself is interlaced
  * by row. */
-int res_create_multi_display_surface(const char* name,
+int res_create_multi_display_surface(const char* name, const char *dir,
                                      int *frames, gr_surface **pSurface);
 
 /* Load a single alpha surface from a grayscale PNG image. */
-int res_create_alpha_surface(const char* name, gr_surface* pSurface);
+int res_create_alpha_surface(const char* name, const char *dir, gr_surface* pSurface);
 
 /* Load part of a grayscale PNG image that is the first match for the
  * given locale. The image is expected to be a composite of multiple
@@ -113,7 +113,7 @@ int res_create_alpha_surface(const char* name, gr_surface* pSurface);
  * the subimages' size and intended locale in the pixel data. See
  * development/tools/recovery_l10n for an app that will generate these
  * specialized images from Android resources. */
-int res_create_localized_alpha_surface(const char* name, const char* locale,
+int res_create_localized_alpha_surface(const char* name, const char *dir, const char* locale,
                                        gr_surface* pSurface);
 
 /* Free a surface allocated by any of the res_create_*_surface() functions. */
