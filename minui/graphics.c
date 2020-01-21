@@ -354,7 +354,7 @@ gr_init_font(void)
 	/* TODO: Check for error */
 	gr_font = calloc(sizeof(*gr_font), 1);
 
-	if (!(res = res_create_alpha_surface("font", &(gr_font->texture)))) {
+	if (!(res = res_create_alpha_surface("font", "/res/images", &(gr_font->texture)))) {
 		/* The font image should be a 96x2 array of character images.
 		 * The columns are the printable ASCII characters 0x20 - 0x7f.
 		 * The top row is regular text; the bottom row is bold. */

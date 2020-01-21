@@ -14,6 +14,7 @@
 
 static struct option options[] = {
 	{"animate",     required_argument, 0, 'a'},
+	{"imagesdir",   required_argument, 0, 'i'},
 	{"progressbar", required_argument, 0, 'p'},
 	{"stopafter",   required_argument, 0, 's'},
 	{"text",        required_argument, 0, 't'},
@@ -37,12 +38,14 @@ print_help(void)
 	printf("  yamui - tool to display progress bar, logo, or small animation on UI\n");
 	printf("  Usage:\n");
 	short_help();
-	printf("    IMAGE(s)   - png picture file names in /res/images without .png extension\n");
+	printf("    IMAGE(s)   - png picture file names in DIR without .png extension\n");
 	printf("                 NOTE: currently maximum of %d pictures supported\n",
 	       IMAGES_MAX);
 	printf("\n  OPTIONS:\n");
 	printf("  --animate=PERIOD, -a PERIOD\n");
 	printf("         Show IMAGEs (at least 2) in rotation over PERIOD ms\n");
+	printf("  --imagesdir=DIR, -i DIR\n");
+	printf("         Load IMAGE(s) from DIR, /res/images by default\n");
 	printf("  --progressbar=TIME, -p TIME\n");
 	printf("         Show a progess bar over TIME milliseconds\n");
 	printf("  --stopafter=TIME, -s TIME\n");
@@ -81,12 +84,13 @@ main(int argc, char *argv[])
 	unsigned long long int progress_ms = 0;
 	char * text = NULL;
 	char * images[IMAGES_MAX];
+	char * images_dir = "/res/images";
 	int image_count = 0;
 	int ret = 0;
 	int i = 0;
 
 	while (1) {
-		c = getopt_long(argc, argv, "a:p:s:t:h", options,
+		c = getopt_long(argc, argv, "a:i:p:s:t:h", options,
 				&option_index);
 		if (c == -1)
 			break;
@@ -95,6 +99,10 @@ main(int argc, char *argv[])
 		case 'a':
 			printf("got animate %s ms\n", optarg);
 			animate_ms = strtoul(optarg, (char **)NULL, 10);
+			break;
+		case 'i':
+			printf("got imagesdir \"%s\"\n", optarg);
+			images_dir = optarg;
 			break;
 		case 'p':
 			printf("got progressbar %s ms\n", optarg);
@@ -130,7 +138,7 @@ main(int argc, char *argv[])
 	add_text(text);
 
 	if (image_count == 1 && !progress_ms) {
-		ret = loadLogo(images[0]);
+		ret = loadLogo(images[0], images_dir);
 		if (ret) {
 			printf("Image \"%s\" not found in /res/images/\n",
 			       images[0]);
@@ -148,7 +156,7 @@ main(int argc, char *argv[])
 
 	if (image_count <= 1 && progress_ms) {
 		if (image_count == 1)
-			loadLogo(images[0]);
+			loadLogo(images[0], images_dir);
 		i = 0;
 		while (i <= 100){
 			osUpdateScreenShowProgress(i);
@@ -181,7 +189,7 @@ main(int argc, char *argv[])
 
 		i = 0;
 		while (never_stop || time_left > 0) {
-			ret = loadLogo(images[i]);
+			ret = loadLogo(images[i], images_dir);
 			if (ret) {
 				printf("\"%s\" not found in /res/images/\n",
 				       images[i]);
