@@ -170,7 +170,11 @@ static struct drm_surface *drm_create_surface(int width, int height) {
     surface->base.row_bytes = create_dumb.pitch;
     surface->base.pixel_bytes = create_dumb.bpp / 8;
     surface->base.data = (unsigned char*)
+#ifdef __LP64__
+                         mmap(NULL,
+#else
                          mmap64(NULL,
+#endif
                               surface->base.height * surface->base.row_bytes,
                               PROT_READ | PROT_WRITE, MAP_SHARED,
                               drm_fd, map_dumb.offset);
