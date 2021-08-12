@@ -1,4 +1,4 @@
-#define _BSD_SOURCE	700
+#define _DEFAULT_SOURCE
 
 #include <stdio.h>
 #include <getopt.h>
