@@ -89,6 +89,8 @@ main(int argc, char *argv[])
 	int ret = 0;
 	int i = 0;
 
+	setlinebuf(stdout);
+
 	while (1) {
 		c = getopt_long(argc, argv, "a:i:p:s:t:h", options,
 				&option_index);
