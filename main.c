@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <signal.h>
+#include <sys/signalfd.h>
 #include <sys/select.h>
 
 #include "os-update.h"
@@ -21,6 +23,30 @@ static struct option options[] = {
 	{"help",        no_argument,       0, 'h'},
 	{0, 0, 0, 0},
 };
+
+/* ------------------------------------------------------------------------ */
+
+static int
+wait_signalfd(int sigfd, unsigned long long int msecs)
+{
+	int ret;
+	fd_set fdset;
+	struct timespec ts = {
+		.tv_sec = msecs / 1000,
+		.tv_nsec = (msecs % 1000) * 1000000
+	};
+
+	FD_ZERO(&fdset);
+	if (sigfd >= 0)
+		FD_SET(sigfd, &fdset);
+
+	ret = pselect(sigfd + 1, &fdset, NULL, NULL, msecs ? &ts : NULL, NULL);
+	if (ret > 0)
+		printf("Interrupted, bailing out\n");
+	else if (ret == -1)
+		printf("An error occured, bailing out\n");
+	return ret;
+}
 
 /* ------------------------------------------------------------------------ */
 
@@ -88,6 +114,8 @@ main(int argc, char *argv[])
 	int image_count = 0;
 	int ret = 0;
 	int i = 0;
+	int sigfd = -1;
+	sigset_t mask;
 
 	setlinebuf(stdout);
 
@@ -136,6 +164,20 @@ main(int argc, char *argv[])
 	if (osUpdateScreenInit())
 		return -1;
 
+	/* Allow SIGTERM and SIGINT to interrupt pselect() and move to cleanup */
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGTERM);
+	sigaddset(&mask, SIGINT);
+	sigfd = signalfd(-1, &mask, 0);
+	if (sigfd == -1) {
+		printf("Could not create signal fd\n");
+		goto cleanup;
+	}
+	if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
+		printf("Could not block signals\n");
+		goto cleanup;
+	}
+
 	/* In case there is text to add, add it to both sides of the "flip" */
 	add_text(text);
 
@@ -148,10 +190,7 @@ main(int argc, char *argv[])
 		}
 
 		showLogo();
-		if (stop_ms)
-			usleep(stop_ms * 1000);
-		else
-			select(0, NULL, NULL, NULL, NULL);
+		wait_signalfd(sigfd, stop_ms);
 
 		goto cleanup;
 	}
@@ -160,9 +199,10 @@ main(int argc, char *argv[])
 		if (image_count == 1)
 			loadLogo(images[0], images_dir);
 		i = 0;
-		while (i <= 100){
+		while (i <= 100) {
 			osUpdateScreenShowProgress(i);
-			usleep(1000 * progress_ms / 100);
+			if (wait_signalfd(sigfd, progress_ms / 100))
+				break;
 			i++;
 		}
 
@@ -184,10 +224,7 @@ main(int argc, char *argv[])
 			goto cleanup;
 		}
 
-		if (stop_ms)
-			never_stop = false;
-		else
-			never_stop = true;
+		never_stop = !stop_ms;
 
 		i = 0;
 		while (never_stop || time_left > 0) {
@@ -199,7 +236,8 @@ main(int argc, char *argv[])
 			}
 
 			showLogo();
-			usleep(1000 * period);
+			if (wait_signalfd(sigfd, period))
+				break;
 			time_left -= period;
 			i++;
 			i = i % image_count;
@@ -209,14 +247,13 @@ main(int argc, char *argv[])
 	}
 
 	if (text) {
-		if (stop_ms)
-			usleep(1000 * stop_ms);
-		else
-			select(0, NULL, NULL, NULL, NULL);
+		wait_signalfd(sigfd, stop_ms);
 		goto cleanup;
 	}
 
 cleanup:
+	if (sigfd != -1)
+		close(sigfd);
 	osUpdateScreenExit();
 out:
 	return ret;
