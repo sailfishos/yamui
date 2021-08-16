@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 
 #include <errno.h>
 #include <stdio.h>

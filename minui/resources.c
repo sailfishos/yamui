@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 
 #include <png.h>
 #include <fcntl.h>
