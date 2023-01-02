@@ -69,8 +69,11 @@ open_png(const char *name, const char *dir, png_structp *png_ptr, png_infop *inf
 	volatile int result = 0;
 	size_t bytesRead;
 
-	snprintf(resPath, sizeof(resPath) - 1, "%s/%s.png", dir, name);
-	resPath[sizeof(resPath)-1] = '\0';
+	if (dir)
+		snprintf(resPath, sizeof resPath, "%s/%s.png", dir, name);
+	else
+		snprintf(resPath, sizeof resPath, "%s", name);
+
 	*fp = fopen(resPath, "rb");
 	if (*fp == NULL) {
 		result = -1;

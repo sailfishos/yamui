@@ -9,6 +9,7 @@ Source0:    %{name}-%{version}.tar.gz
 
 BuildRequires:  libpng-devel
 BuildRequires:  libdrm-devel
+BuildRequires:  pkgconfig(libsystemd)
 
 %description
 %{summary}.

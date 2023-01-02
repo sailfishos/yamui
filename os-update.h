@@ -1,13 +1,6 @@
 #ifndef _OS_UPDATE_H_
 #define _OS_UPDATE_H_
 
-/* Initializes the minui
- *
- * @return 0 when successfull
- * @return -1 when init fails, in this case anything below shouldn't be used.
- */
-int osUpdateScreenInit(void);
-
 /*
  * Loads logo and overrides the old logo if already loaded.
  * @param filename of the file located in dir without extension or
@@ -33,6 +26,6 @@ int showLogo(void);
 void osUpdateScreenShowProgress(int percentage);
 
 /* Should be called before ending application, to free memory etc. */
-void osUpdateScreenExit(void);
+void freeLogo(void);
 
 #endif /* _OS_UPDATE_H_ */
