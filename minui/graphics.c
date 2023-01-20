@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (c) 2007 The Android Open Source Project
+ * Copyright (c) 2014 - 2023 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -439,11 +440,15 @@ gr_init(bool blank)
 /*
 	}
 */
+	gr_flip();
+	if (!gr_draw)
+		return -1;
+	gr_flip();
+	if (!gr_draw)
+		return -1;
+
 	overscan_offset_x = gr_draw->width  * overscan_percent / 100;
 	overscan_offset_y = gr_draw->height * overscan_percent / 100;
-
-	gr_flip();
-	gr_flip();
 
 	return 0;
 }
