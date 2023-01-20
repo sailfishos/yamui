@@ -308,7 +308,11 @@ gr_blit(GRSurface *source, int sx, int sy, int w, int h, int dx, int dy)
 	dx += overscan_offset_x;
 	dy += overscan_offset_y;
 
-	if (outside(dx, dy) || outside(dx + w - 1, dy + h- 1))
+	if (dx < 0) sx -= dx, w += dx, dx = 0;
+	if (dy < 0) sy -= dy, h += dy, dy = 0;
+	if (dx + w > gr_draw->width) w = gr_draw->width - dx;
+	if (dy + h > gr_draw->height) h = gr_draw->height - dy;
+	if (w <= 0 || h <= 0)
 		return;
 
 	src_p = source->data + sy * source->row_bytes +
