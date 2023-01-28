@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (c) 2007 The Android Open Source Project
+ * Copyright (c) 2014 - 2023 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +65,8 @@ open_png(const char *name, const char *dir, png_structp *png_ptr, png_infop *inf
 {
 	char resPath[256];
 	unsigned char header[8];
-	int color_type, bit_depth, result = 0;
+	int color_type, bit_depth;
+	volatile int result = 0;
 	size_t bytesRead;
 
 	snprintf(resPath, sizeof(resPath) - 1, "%s/%s.png", dir, name);

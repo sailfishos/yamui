@@ -5,6 +5,7 @@ OBJS := $(patsubst %.c, %.o, $(C_FILES))
 CC = cc
 CFLAGS = -Wall -DOVERSCAN_PERCENT=0 -I/usr/include/ -O2 -W -std=c99 `pkg-config --cflags libdrm`
 LDFLAGS = -lpng -lc -lz -lm `pkg-config --libs libdrm`
+CPPFLAGS += -D_GNU_SOURCE
 
 OBJS_COMMON := yamui-tools.o
 
