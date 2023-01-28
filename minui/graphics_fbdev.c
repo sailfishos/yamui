@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (c) 2014 The Android Open Source Project
+ * Copyright (c) 2014 - 2023 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #include <linux/fb.h>
 #include <linux/kd.h>
@@ -110,7 +112,8 @@ fbdev_init(minui_backend *backend, bool blank)
 	if (fd < 0) {
 		fd = open("/dev/fb0", O_RDWR);
 		if (fd < 0) {
-			perror("cannot open fb0");
+			if (errno != ENOENT)
+				perror("cannot open fb0");
 			return NULL;
 		}
 	}
