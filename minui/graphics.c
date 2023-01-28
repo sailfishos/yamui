@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -355,20 +356,32 @@ static void
 gr_init_font(void)
 {
 	int res;
+	static const char font_path[] = "/res/images/font.png";
 
 	/* TODO: Check for error */
 	gr_font = calloc(sizeof(*gr_font), 1);
 
-	if (!(res = res_create_alpha_surface("font", "/res/images", &(gr_font->texture)))) {
+	bool font_loaded = false;
+
+	if (access(font_path, F_OK) == -1 && errno == ENOENT) {
+		/* Not having a font file is normal, no need
+		 * to complain. */
+	}
+	else if (!(res = res_create_alpha_surface(font_path, NULL, &gr_font->texture))) {
 		/* The font image should be a 96x2 array of character images.
 		 * The columns are the printable ASCII characters 0x20 - 0x7f.
 		 * The top row is regular text; the bottom row is bold. */
 		gr_font->cwidth = gr_font->texture->width / 96;
 		gr_font->cheight = gr_font->texture->height / 2;
-	} else {
+		font_loaded = true;
+	}
+	else {
+		printf("%s: failed to read font: res=%d\n", font_path, res);
+	}
+
+	if (!font_loaded) {
 		unsigned char *bits, data, *in = font.rundata;
 
-		printf("failed to read font: res=%d\n", res);
 
 		/* fall back to the compiled-in font. */
 		/* TODO: Check for error */
