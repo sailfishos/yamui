@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2014 - 2023 Jolla Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdio.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -14,29 +30,11 @@ gr_surface logo;
 /* ------------------------------------------------------------------------ */
 
 int
-osUpdateScreenInit(void)
-{
-	if (gr_init(true)) {
-		printf("Failed gr_init!\n");
-		return -1;
-	}
-
-	/* Clear the screen */
-	gr_color(0, 0, 0, 255);
-	gr_clear();
-
-	return 0;
-}
-
-/* ------------------------------------------------------------------------ */
-
-int
 loadLogo(const char *filename, const char *dir)
 {
 	int ret;
 
-	if (logo)
-		res_free_surface(logo);
+	freeLogo();
 
 	if ((ret = res_create_display_surface(filename, dir, &logo)) < 0) {
 		printf("Error while trying to load %s, retval: %i.\n",
@@ -63,7 +61,6 @@ showLogo(void)
 		int dy = (fbh - logoh) / 2;
 
 		gr_blit(logo, 0, 0, logow, logoh, dx, dy);
-		gr_flip();
 	} else {
 		printf("No logo loaded\n");
 		return -1;
@@ -122,18 +119,14 @@ osUpdateScreenShowProgress(int percentage)
 
 		gr_blit(logo, 0, 0, logow, logoh, dx, dy);
 	}
-
-	/* And finally draw everything */
-	gr_flip();
 }
 
 /* ------------------------------------------------------------------------ */
 
 void
-osUpdateScreenExit(void)
+freeLogo(void)
 {
 	if (logo)
-		res_free_surface(logo);
+		res_free_surface(logo), logo = 0;
 
-	gr_exit();
 }

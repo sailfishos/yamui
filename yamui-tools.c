@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2015 Jolla Ltd.
- * Contact: Igor Zhbanov <igor.zhbanov@jolla.com>
+ * Copyright (c) 2015 - 2023 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,8 +95,9 @@ open_fds(int fds[], int *num, int max_num, device_filter_t device_filter)
 		if (strncmp(d->d_name, EVENT_PREFIX, strlen(EVENT_PREFIX)))
 			continue; /* Not /dev/input/event* file */
 
-		snprintf(name, sizeof(name), "%s/%s", DEV_INPUT_DIR,
-			 d->d_name);
+		if (snprintf(name, sizeof name, "%s/%s", DEV_INPUT_DIR,
+			 d->d_name) >= (int)sizeof name)
+			continue;
 		debugf("Processing input ivents file %s", name);
 		if ((fds[*num] = open(name, O_RDONLY)) == -1) {
 			errorf("Can't open input device %s", name);

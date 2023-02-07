@@ -3,8 +3,30 @@ MINUI_C_FILES := minui/graphics.c minui/graphics_fbdev.c minui/events.c minui/re
 C_FILES := main.c os-update.c $(MINUI_C_FILES)
 OBJS := $(patsubst %.c, %.o, $(C_FILES))
 CC = cc
-CFLAGS = -Wall -DOVERSCAN_PERCENT=0 -I/usr/include/ -O2 -W -std=c99 `pkg-config --cflags libdrm`
-LDFLAGS = -lpng -lc -lz -lm `pkg-config --libs libdrm`
+
+PKG_NAMES += libdrm
+PKG_NAMES += glib-2.0
+PKG_NAMES += gio-2.0
+PKG_NAMES += libsystemd
+PKG_CONFIG := pkg-config
+PKG_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(PKG_NAMES))
+PKG_LDLIBS := $(shell $(PKG_CONFIG) --libs   $(PKG_NAMES))
+
+CPPFLAGS += -D_GNU_SOURCE
+CPPFLAGS += -DOVERSCAN_PERCENT=0
+
+CFLAGS += -std=c99
+CFLAGS += -O2
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += $(PKG_CFLAGS)
+CFLAGS += -Wno-missing-field-initializers
+
+LDFLAGS += $(PKG_LDLIBS)
+LDFLAGS += -lpng
+LDFLAGS += -lc
+LDFLAGS += -lz
+LDFLAGS += -lm
 
 OBJS_COMMON := yamui-tools.o
 
@@ -18,7 +40,7 @@ CFLAGS_POWERKEY = -W -Wall -ansi -pedantic -O2
 C_FILES_POWERKEY := yamui-powerkey.c
 OBJS_POWERKEY := $(patsubst %.c, %.o, $(C_FILES_POWERKEY))
 
-all: $(PROGRAM) $(SCREENSAVERD) $(POWERKEY)
+all:: $(PROGRAM) $(SCREENSAVERD) $(POWERKEY)
 
 $(PROGRAM): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(PROGRAM)
@@ -29,11 +51,11 @@ $(SCREENSAVERD): $(OBJS_SCREENSAVERD) $(OBJS_COMMON)
 $(POWERKEY): $(OBJS_POWERKEY) $(OBJS_COMMON)
 	$(CC) $(CFLAGS_POWERKEY) $(OBJS_POWERKEY) $(OBJS_COMMON) -o $(POWERKEY)
 
-install: all
+install:: all
 	strip $(PROGRAM) $(SCREENSAVERD)
 	install -m 755 -D $(PROGRAM) $(DESTDIR)/usr/bin/$(PROGRAM)
 	install -m 755 -D $(SCREENSAVERD) $(DESTDIR)/usr/bin/$(SCREENSAVERD)
 	install -m 755 -D $(POWERKEY) $(DESTDIR)/usr/bin/$(POWERKEY)
 
-clean:
+clean::
 	rm -f *.o minui/*.o $(PROGRAM) $(SCREENSAVERD) $(POWERKEY)
