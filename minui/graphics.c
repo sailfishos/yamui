@@ -416,6 +416,42 @@ gr_flip(void)
 
 /* ------------------------------------------------------------------------ */
 
+static int gr_init_fbdev(bool blank)
+{
+	gr_backend = open_fbdev();
+	gr_draw = gr_backend->init(gr_backend, blank);
+	if (gr_draw)
+		gr_flip();
+	if (gr_draw)
+		gr_flip();
+	if (!gr_draw)
+		gr_backend->exit(gr_backend);
+	return gr_draw ? 0 : -1;
+}
+
+static int gr_init_drm(bool blank)
+{
+	/* Assume that failures can happen due to there being
+	 * another process that is trying to release display
+	 * and allow some slack for that to finish.
+	 */
+	gr_backend = open_drm();
+	for (int failures = 0;;) {
+		gr_draw = gr_backend->init(gr_backend, blank);
+		if (gr_draw)
+			gr_flip();
+		if (gr_draw)
+			gr_flip();
+		if (gr_draw)
+			break;
+		gr_backend->exit(gr_backend);
+		if (++failures >= 5)
+			break;
+		struct timespec ts = { 0, 100 * 1000 * 1000 };
+		nanosleep(&ts, NULL);
+	}
+	return gr_draw ? 0 : -1;
+}
 int
 gr_init(bool blank)
 {
@@ -431,38 +467,8 @@ gr_init(bool blank)
 		gr_exit();
 		return -1;
 	}
-/*
-	gr_backend = open_adf();
-	if (gr_backend) {
-		gr_draw = gr_backend->init(gr_backend, blank);
-		if (!gr_draw)
-			gr_backend->exit(gr_backend);
-	}
 
-	if (!gr_draw) {
-*/
-	gr_backend = open_fbdev();
-	gr_draw = gr_backend->init(gr_backend, blank);
-	if (!gr_draw) {
-		gr_backend->exit(gr_backend);
-
-		gr_backend = open_drm();
-		gr_draw = gr_backend->init(gr_backend, blank);
-		gr_backend->exit(gr_backend);
-
-		gr_backend = open_drm();
-		gr_draw = gr_backend->init(gr_backend, blank);
-		if (!gr_draw)
-			return -1;
-	}
-/*
-	}
-*/
-	gr_flip();
-	if (!gr_draw)
-		return -1;
-	gr_flip();
-	if (!gr_draw)
+	if (gr_init_fbdev(blank) != 0 && gr_init_drm(blank) != 0)
 		return -1;
 
 	overscan_offset_x = gr_draw->width  * overscan_percent / 100;
