@@ -1,13 +1,9 @@
-PROGRAM = yamui
-MINUI_C_FILES := minui/graphics.c minui/graphics_fbdev.c minui/events.c minui/resources.c minui/graphics_drm.c
-C_FILES := main.c os-update.c $(MINUI_C_FILES)
-OBJS := $(patsubst %.c, %.o, $(C_FILES))
-CC = cc
-
 PKG_NAMES += libdrm
+PKG_NAMES += libpng
 PKG_NAMES += glib-2.0
 PKG_NAMES += gio-2.0
 PKG_NAMES += libsystemd
+
 PKG_CONFIG := pkg-config
 PKG_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(PKG_NAMES))
 PKG_LDLIBS := $(shell $(PKG_CONFIG) --libs   $(PKG_NAMES))
@@ -22,40 +18,51 @@ CFLAGS += -Wextra
 CFLAGS += $(PKG_CFLAGS)
 CFLAGS += -Wno-missing-field-initializers
 
-LDFLAGS += $(PKG_LDLIBS)
-LDFLAGS += -lpng
-LDFLAGS += -lc
-LDFLAGS += -lz
-LDFLAGS += -lm
+LDLIBS += -Wl,--as-needed
+LDLIBS += $(PKG_LDLIBS)
 
-OBJS_COMMON := yamui-tools.o
+TARGETS_BIN += yamui
+TARGETS_BIN += yamui-screensaverd
+TARGETS_BIN += yamui-powerkey
 
-SCREENSAVERD = yamui-screensaverd
-CFLAGS_SCREENSAVERD = -W -Wall -ansi -pedantic -O2
-C_FILES_SCREENSAVERD := yamui-screensaverd.c $(MINUI_C_FILES)
-OBJS_SCREENSAVERD := $(patsubst %.c, %.o, $(C_FILES_SCREENSAVERD))
+DESTDIR ?= test-install-root # rpm-build overrides this
 
-POWERKEY = yamui-powerkey
-CFLAGS_POWERKEY = -W -Wall -ansi -pedantic -O2
-C_FILES_POWERKEY := yamui-powerkey.c
-OBJS_POWERKEY := $(patsubst %.c, %.o, $(C_FILES_POWERKEY))
-
-all:: $(PROGRAM) $(SCREENSAVERD) $(POWERKEY)
-
-$(PROGRAM): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(PROGRAM)
-
-$(SCREENSAVERD): $(OBJS_SCREENSAVERD) $(OBJS_COMMON)
-	$(CC) $(CFLAGS_SCREENSAVERD) $(OBJS_SCREENSAVERD) $(OBJS_COMMON) $(LDFLAGS) -o $(SCREENSAVERD)
-
-$(POWERKEY): $(OBJS_POWERKEY) $(OBJS_COMMON)
-	$(CC) $(CFLAGS_POWERKEY) $(OBJS_POWERKEY) $(OBJS_COMMON) -o $(POWERKEY)
+all:: $(TARGETS_BIN)
 
 install:: all
-	strip $(PROGRAM) $(SCREENSAVERD)
-	install -m 755 -D $(PROGRAM) $(DESTDIR)/usr/bin/$(PROGRAM)
-	install -m 755 -D $(SCREENSAVERD) $(DESTDIR)/usr/bin/$(SCREENSAVERD)
-	install -m 755 -D $(POWERKEY) $(DESTDIR)/usr/bin/$(POWERKEY)
+	install -m 755 -t $(DESTDIR)/usr/bin -D $(TARGETS_BIN)
 
-clean::
-	rm -f *.o minui/*.o $(PROGRAM) $(SCREENSAVERD) $(POWERKEY)
+distclean:: clean
+
+clean:: mostlyclean
+	$(RM) $(TARGETS_BIN)
+	$(RM) *.o */*.o
+
+mostlyclean::
+	$(RM) *.bak *~ */*.bak */*~
+
+MINUI_SRC += minui/graphics.c
+MINUI_SRC += minui/graphics_fbdev.c
+MINUI_SRC += minui/events.c
+MINUI_SRC += minui/resources.c
+MINUI_SRC += minui/graphics_drm.c
+
+YAMUI_SRC += yamui.c
+YAMUI_SRC += os-update.c
+YAMUI_SRC += $(MINUI_SRC)
+YAMUI_OBJ := $(patsubst %.c, %.o, $(YAMUI_SRC))
+
+yamui: $(YAMUI_OBJ)
+
+SCREENSAVERD_SRC += yamui-screensaverd.c
+SCREENSAVERD_SRC += yamui-tools.c
+SCREENSAVERD_SRC += $(MINUI_SRC)
+SCREENSAVERD_OBJ := $(patsubst %.c, %.o, $(SCREENSAVERD_SRC))
+
+yamui-screensaverd: $(SCREENSAVERD_OBJ)
+
+POWERKEY_SRC += yamui-powerkey.c
+POWERKEY_SRC += yamui-tools.c
+POWERKEY_OBJ := $(patsubst %.c, %.o, $(POWERKEY_SRC))
+
+yamui-powerkey: $(POWERKEY_OBJ)
