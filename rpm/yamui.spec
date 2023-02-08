@@ -1,15 +1,17 @@
 Name:       yamui
 Summary:    Minimal UI tool for displaying simple graphical indicators
-Version:    1.0.6
+Version:    1.2.1
 Release:    1
 Url:        https://github.com/sailfishos/yamui.git
 Group:      System/Boot
 License:    ASL 2.0
 Source0:    %{name}-%{version}.tar.gz
 
-BuildRequires:  libpng-devel
-BuildRequires:  libdrm-devel
+BuildRequires:  pkgconfig(libpng)
+BuildRequires:  pkgconfig(libdrm)
 BuildRequires:  pkgconfig(libsystemd)
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(gio-2.0)
 
 %description
 %{summary}.
