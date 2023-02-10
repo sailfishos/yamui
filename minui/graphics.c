@@ -431,11 +431,19 @@ static int gr_init_fbdev(bool blank)
 
 static int gr_init_drm(bool blank)
 {
+	gr_backend = open_drm();
+
+	/* At least in Xperia 10: the first display open succeeds
+	 * without any trace of problems, but nothing is actually
+	 * drawn on screen - make sure we get past that...
+	 */
+	gr_backend->init(gr_backend, blank);
+	gr_backend->exit(gr_backend);
+
 	/* Assume that failures can happen due to there being
 	 * another process that is trying to release display
 	 * and allow some slack for that to finish.
 	 */
-	gr_backend = open_drm();
 	for (int failures = 0;;) {
 		gr_draw = gr_backend->init(gr_backend, blank);
 		if (gr_draw)
