@@ -184,7 +184,7 @@ display_acquire(void)
 		display_acquired = true;
 		if (gr_init(true) == -1) {
 			log_err("gr_init() failed");
-			display_released = true;
+			display_release();
 			mainloop_stop();
 		}
 		else {
@@ -201,7 +201,7 @@ display_acquire(void)
 static void
 display_release(void)
 {
-	if (display_acquired && !display_released) {
+	if (!display_released) {
 		display_released = true;
 		freeLogo();
 		gr_exit();
