@@ -490,11 +490,16 @@ gr_init(bool blank)
 void
 gr_exit(void)
 {
-	gr_backend->exit(gr_backend);
+	if (gr_backend) {
+		gr_backend->exit(gr_backend);
+		gr_backend = NULL;
+	}
 
-	ioctl(gr_vt_fd, KDSETMODE, (void *)KD_TEXT);
-	close(gr_vt_fd);
-	gr_vt_fd = -1;
+	if (gr_vt_fd != -1) {
+		ioctl(gr_vt_fd, KDSETMODE, (void *)KD_TEXT);
+		close(gr_vt_fd);
+		gr_vt_fd = -1;
+	}
 }
 
 /* ------------------------------------------------------------------------ */
