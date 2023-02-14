@@ -267,7 +267,7 @@ display_can_be_drawn(void)
  * ========================================================================= */
 
 /** Path to D-Bus SystemBus socket */
-# define SYSTEMBUS_SOCKET_PATH "/run/dbus/system_bus_socket"
+#define SYSTEMBUS_SOCKET_PATH "/run/dbus/system_bus_socket"
 
 static bool          systembus_socket_exists    = false;
 static GFileMonitor *systembus_socket_monitor   = NULL;
@@ -725,27 +725,27 @@ cleanup:
  * ========================================================================= */
 
 /** Well known dbus name of compositor service */
-# define COMPOSITOR_SERVICE                     "org.nemomobile.compositor"
-# define COMPOSITOR_PATH                        "/"
-# define COMPOSITOR_IFACE                       "org.nemomobile.compositor"
+#define COMPOSITOR_SERVICE                     "org.nemomobile.compositor"
+#define COMPOSITOR_PATH                        "/"
+#define COMPOSITOR_IFACE                       "org.nemomobile.compositor"
 
 /** Enabling/disabling display updates via compositor service */
-# define COMPOSITOR_SET_UPDATES_ENABLED         "setUpdatesEnabled"
+#define COMPOSITOR_SET_UPDATES_ENABLED         "setUpdatesEnabled"
 
 /** Query owner of topmost ui window */
-# define COMPOSITOR_GET_TOPMOST_WINDOW_PID	"privateTopmostWindowProcessId"
+#define COMPOSITOR_GET_TOPMOST_WINDOW_PID      "privateTopmostWindowProcessId"
 
 /** Change notification for owner of topmost ui window */
-# define COMPOSITOR_TOPMOST_WINDOW_PID_CHANGED  "privateTopmostWindowProcessIdChanged"
+#define COMPOSITOR_TOPMOST_WINDOW_PID_CHANGED  "privateTopmostWindowProcessIdChanged"
 
 /** Query requirements of this compositor process */
-# define COMPOSITOR_GET_SETUP_ACTIONS           "privateGetSetupActions"
+#define COMPOSITOR_GET_SETUP_ACTIONS           "privateGetSetupActions"
 
 /** Setup actions supported by mce */
-# define COMPOSITOR_ACTION_NONE                 0
-# define COMPOSITOR_ACTION_STOP_HWC             (1<<0)
-# define COMPOSITOR_ACTION_START_HWC            (1<<1)
-# define COMPOSITOR_ACTION_RESTART_HWC          (1<<2)
+#define COMPOSITOR_ACTION_NONE                 0
+#define COMPOSITOR_ACTION_STOP_HWC             (1<<0)
+#define COMPOSITOR_ACTION_START_HWC            (1<<1)
+#define COMPOSITOR_ACTION_RESTART_HWC          (1<<2)
 
 /** Introspect XML - needed for setting up glib based dbus service */
 static const char introspect_xml[] = ""
@@ -1157,10 +1157,10 @@ cleanup:
 static void
 app_flush_images(void)
 {
-    while (app_image_count > 0) {
-	gchar *filepath = app_images[--app_image_count];
-	g_free(filepath);
-    }
+	while (app_image_count > 0) {
+		gchar *filepath = app_images[--app_image_count];
+		g_free(filepath);
+	}
 }
 
 /** Hook for redrawing ui content after display unblank
@@ -1548,11 +1548,10 @@ cleanup:
 	 * during compositor handover).
 	 */
 	if (debugging) {
-	    display_release();
-	    app_flush_images();
-	    compositor_cancel_connect();
-	    systembus_quit_socket_monitor();
-	    compositor_quit();
+		display_release();
+		app_flush_images();
+		systembus_quit_socket_monitor();
+		compositor_quit();
 	}
 
 	log_debug("exit");
