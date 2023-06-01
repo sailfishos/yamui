@@ -1412,24 +1412,26 @@ app_print_long_help(void)
 	printf("         Print this help\n");
 	printf("  --terminate, -x\n");
 	printf("         Terminate splashscreen (when dbus is not available)\n");
+	printf("  --skip-cleanup, -c\n");
+	printf("         Skip display cleanup at exit.\n");
 }
 
 /** Long form command line options */
 static struct option opt_long[] = {
-	{"animate",     required_argument, 0, 'a'},
-	{"imagesdir",   required_argument, 0, 'i'},
-	{"progressbar", required_argument, 0, 'p'},
-	{"stopafter",   required_argument, 0, 's'},
-	{"text",        required_argument, 0, 't'},
-	{"help",        no_argument,       0, 'h'},
-	{"terminate",   no_argument,       0, 'x'},
-	{"systemd",     no_argument,       0, 'n'},
-	{"debug",       no_argument,       0, 'd'},
+	{"animate",      required_argument, 0, 'a'},
+	{"imagesdir",    required_argument, 0, 'i'},
+	{"progressbar",  required_argument, 0, 'p'},
+	{"stopafter",    required_argument, 0, 's'},
+	{"text",         required_argument, 0, 't'},
+	{"help",         no_argument,       0, 'h'},
+	{"terminate",    no_argument,       0, 'x'},
+	{"systemd",      no_argument,       0, 'n'},
+	{"skip-cleanup", no_argument,       0, 'c'},
 	{0, 0, 0, 0},
 };
 
 /** Short form command line options */
-static const char opt_short[] = "a:i:p:s:t:hxnd";
+static const char opt_short[] = "a:i:p:s:t:hxnc";
 
 /* ========================================================================= *
  * MAIN
@@ -1438,7 +1440,7 @@ static const char opt_short[] = "a:i:p:s:t:hxnd";
 int
 main(int argc, char *argv[])
 {
-	bool debugging = false;
+	bool do_cleanup = true;
 
 	setlinebuf(stdout);
 	setlinebuf(stderr);
@@ -1482,8 +1484,9 @@ main(int argc, char *argv[])
 			log_debug("using systemd notify");
 			app_systemd_notify = true;
 			break;
-		case 'd':
-			debugging = true;
+		case 'c':
+			log_debug("skip display cleanup");
+			do_cleanup = false;
 			break;
 		case 'h':
 			app_print_long_help();
@@ -1547,7 +1550,7 @@ cleanup:
 	 * thus potentially eliminate / shorten black screen time
 	 * during compositor handover).
 	 */
-	if (debugging) {
+	if (do_cleanup) {
 		display_release();
 		app_flush_images();
 		systembus_quit_socket_monitor();
