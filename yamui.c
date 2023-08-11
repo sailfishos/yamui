@@ -1214,8 +1214,8 @@ app_draw_single_image_cb(void)
 	app_draw_ui_cb = app_draw_single_image_cb;
 
 	if (display_can_be_drawn()) {
-		app_draw_text();
 		showLogo();
+		app_draw_text();
 		gr_flip();
 	}
 }
@@ -1240,8 +1240,8 @@ app_draw_progress_bar_cb(void)
 	app_draw_ui_cb = app_draw_progress_bar_cb;
 
 	if (display_can_be_drawn()) {
-		app_draw_text();
 		osUpdateScreenShowProgress(app_step);
+		app_draw_text();
 		gr_flip();
 	}
 }
@@ -1291,8 +1291,8 @@ app_draw_animate_images_cb(void)
 	if (display_can_be_drawn()) {
 		gr_color(0, 0, 0, 255);
 		gr_clear();
-		app_draw_text();
 		showLogo();
+		app_draw_text();
 		gr_flip();
 	}
 }
