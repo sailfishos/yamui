@@ -94,31 +94,26 @@ text_blend(unsigned char *src_p, int src_row_bytes, unsigned char *dst_p,
 		for (i = 0; i < width; i++) {
 			unsigned char a = *sx++;
 
-			if (gr_current_a < 255) {
-				a = ((int)a * gr_current_a) / 255;
-				if (a == 255) {
-					*px++ = gr_current_r;
-					*px++ = gr_current_g;
-					*px++ = gr_current_b;
-					px++;
-				} else if (a > 0) {
-					*px = (*px * (255 - a) +
-					       gr_current_r * a) / 255;
-					px++;
-					*px = (*px * (255 - a) +
-					       gr_current_g * a) / 255;
-					px++;
-					*px = (*px * (255 - a) +
-					       gr_current_b * a) / 255;
-					px++;
-					px++;
-				} else
-					px += 4;
-			}
+			if (gr_current_a < 255)
+				a = (int)a * gr_current_a / 255;
 
-			src_p += src_row_bytes;
-			dst_p += dst_row_bytes;
+			if (a == 255) {
+				*px++ = gr_current_r;
+				*px++ = gr_current_g;
+				*px++ = gr_current_b;
+				px++;
+			} else if (a > 0) {
+				int b = 255 - a;
+				*px++ = (*px * b + gr_current_r * a) / 255;
+				*px++ = (*px * b + gr_current_g * a) / 255;
+				*px++ = (*px * b + gr_current_b * a) / 255;
+				px++;
+			} else {
+				px += 4;
+			}
 		}
+		src_p += src_row_bytes;
+		dst_p += dst_row_bytes;
 	}
 }
 
@@ -128,7 +123,7 @@ void
 gr_text(int x, int y, const char *s, int bold)
 {
 	GRFont *font = gr_font;
-	unsigned off;
+	unsigned chr;
 
 	if (!font->texture)
 		return;
@@ -136,33 +131,62 @@ gr_text(int x, int y, const char *s, int bold)
 	if (gr_current_a == 0)
 		return;
 
-	bold = bold && (font->texture->height != font->cheight);
+	int has_bold = font->texture->height != font->cheight;
+	bold = bold && has_bold;
 
-	x += overscan_offset_x;
-	y += overscan_offset_y;
+	int fw = font->cwidth;
+	int fh = font->cheight;
+	int cx = 0;
+	int cy = 0;
+	int tab = fw * 8;
+	int sx, sy;
+	unsigned char *src_p, *dst_p;
 
-	while ((off = *s++)) {
-		off -= 32;
-		if (outside(x, y) ||
-		    outside( x +font->cwidth - 1, y + font->cheight - 1))
+	while ((chr = *s++)) {
+		switch (chr) {
+		case '\a': // bell
+			bold = !bold && has_bold;
 			break;
-
-		if (off < 96) {
-			unsigned char *src_p, *dst_p;
-
-			src_p = font->texture->data + (off * font->cwidth) +
-				(bold ? font->cheight *
-				 font->texture->row_bytes : 0);
-			dst_p = gr_draw->data + y * gr_draw->row_bytes +
-						x * gr_draw->pixel_bytes;
-
-			text_blend(src_p, font->texture->row_bytes, dst_p,
-				   gr_draw->row_bytes, font->cwidth,
-				   font->cheight);
-
+		case '\f': // formfeed
+			break;
+		case '\b': // backspace
+			cx -= fw;
+			break;
+		case '\t': // horizontal tab
+			cx += tab;
+			cx -= cx % tab;
+			break;
+		case '\v': // vertical tab
+			cy += fh;
+			break;
+		case '\r': // carriage ret
+			cx = 0;
+			break;
+		case '\n': // new line
+			cx =  0;
+			cy += fh;
+			break;
+		default:
+			if (chr < 32 || chr > 127)
+				chr = 127;
+			chr -= 32;
+			sx = overscan_offset_x + x + cx;
+			sy = overscan_offset_y + y + cy;
+			if (!outside(sx, sy) &&
+			    !outside(sx + fw - 1, sy + fh - 1)) {
+				src_p = font->texture->data + chr * fw;
+				if (bold)
+					src_p += fh * font->texture->row_bytes;
+				dst_p = gr_draw->data
+					+ sy * gr_draw->row_bytes
+					+ sx * gr_draw->pixel_bytes;
+				text_blend(src_p, font->texture->row_bytes,
+					   dst_p, gr_draw->row_bytes,
+					   fw, fh);
+			}
+			cx += fw;
+			break;
 		}
-
-		x += font->cwidth;
 	}
 }
 

@@ -1183,6 +1183,28 @@ app_draw_text(void)
 	}
 }
 
+/** Callback for drawing 'text_only' mode ui
+ */
+static void
+app_draw_text_only_cb(void)
+{
+	/* Set draw on unblank hook */
+	app_draw_ui_cb = app_draw_text_only_cb;
+
+	if (display_can_be_drawn()) {
+		app_draw_text();
+		gr_flip();
+	}
+}
+
+/** Prepare for 'text_only' mode ui
+ */
+static void
+app_start_text_only(void)
+{
+	app_draw_text_only_cb();
+}
+
 /** Callback for drawing 'single_image' mode ui
  */
 static void
@@ -1192,8 +1214,8 @@ app_draw_single_image_cb(void)
 	app_draw_ui_cb = app_draw_single_image_cb;
 
 	if (display_can_be_drawn()) {
-		app_draw_text();
 		showLogo();
+		app_draw_text();
 		gr_flip();
 	}
 }
@@ -1218,8 +1240,8 @@ app_draw_progress_bar_cb(void)
 	app_draw_ui_cb = app_draw_progress_bar_cb;
 
 	if (display_can_be_drawn()) {
-		app_draw_text();
 		osUpdateScreenShowProgress(app_step);
+		app_draw_text();
 		gr_flip();
 	}
 }
@@ -1269,8 +1291,8 @@ app_draw_animate_images_cb(void)
 	if (display_can_be_drawn()) {
 		gr_color(0, 0, 0, 255);
 		gr_clear();
-		app_draw_text();
 		showLogo();
+		app_draw_text();
 		gr_flip();
 	}
 }
@@ -1350,7 +1372,10 @@ app_start_cb(gpointer aptr)
 	else if (app_image_count > 0) {
 		app_start_single_image();
 	}
-	else if (!app_text) {
+	else if (app_text) {
+		app_start_text_only();
+	}
+	else {
 		log_err("Neither text nor image given");
 		goto cleanup;
 	}
