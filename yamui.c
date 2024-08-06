@@ -692,10 +692,11 @@ unix_client_terminate_server(void)
 	}
 
 	if (connect(fd, (struct sockaddr *)&sa, len) == -1) {
-		if (errno == ECONNREFUSED)
+		if (errno == ECONNREFUSED) {
 			log_debug("%s: server not running", unix_server_path);
-		else
-			log_err("%s: connect(): %m", unix_server_path);
+			goto success;
+		}
+		log_err("%s: connect(): %m", unix_server_path);
 		goto cleanup;
 	}
 
@@ -713,7 +714,10 @@ unix_client_terminate_server(void)
 	}
 
 	log_debug("%s: read(): got EOF", unix_server_path);
+
+success:
 	ack = true;
+
 cleanup:
 	if (fd != -1)
 		close(fd);
@@ -1095,6 +1099,9 @@ app_on_enable_from_dbus(void)
 		app_already_enabled = true;
 		log_debug("enabled by mce");
 
+		/* Unix socket is no longer needed, close it */
+		unix_server_quit();
+
 		/* If running as systemd service, this is when
 		 * the app can be considered as "started".
 		 */
@@ -1340,12 +1347,6 @@ app_start_cb(gpointer aptr)
 	/* Handle started-in-early-boot situation */
 
 	if (!systembus_is_available()) {
-		/* Setup unix socket service so that we can be
-		 * terminated without need for dbus access.
-		 */
-		if (!unix_server_init())
-			goto cleanup;
-
 		/* Assume that when dbus becomes available, we
 		 * will be granted permission to draw and grap
 		 * display already now.
@@ -1532,13 +1533,27 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	/* In case D-Bus System bus is not available yet:
+	 * terminate current compositor via unix socket.
+	 */
+	unix_client_terminate_server();
+
+	/* Setup unix socket service so that we can be
+	 * terminated without need for dbus access.
+	 *
+	 * Service socket will be closed if / when we gain
+	 * dbus name ownership and permission to draw.
+	 * After that only D-Bus name ownership determines
+	 * who has permission to draw.
+	 */
+	if (!unix_server_init())
+		goto cleanup;
+
 	if (!compositor_init())
 		goto cleanup;
 
 	if (!systembus_init_socket_monitor())
 		goto cleanup;
-
-	unix_client_terminate_server();
 
 	if (!signals_init())
 		goto cleanup;
