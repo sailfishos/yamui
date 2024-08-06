@@ -104,10 +104,12 @@ text_blend(unsigned char *src_p, int src_row_bytes, unsigned char *dst_p,
 				px++;
 			} else if (a > 0) {
 				int b = 255 - a;
-				*px++ = (*px * b + gr_current_r * a) / 255;
-				*px++ = (*px * b + gr_current_g * a) / 255;
-				*px++ = (*px * b + gr_current_b * a) / 255;
-				px++;
+				*px = (*px * b + gr_current_r * a) / 255;
+				px += 1;
+				*px = (*px * b + gr_current_g * a) / 255;
+				px += 1;
+				*px = (*px * b + gr_current_b * a) / 255;
+				px += 2;
 			} else {
 				px += 4;
 			}
