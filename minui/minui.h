@@ -49,7 +49,7 @@ void gr_clear(void); /* clear entire surface to current color */
 void gr_color(unsigned char r, unsigned char g, unsigned char b,
 	      unsigned char a);
 void gr_fill(int x1, int y1, int x2, int y2);
-void gr_text(int x, int y, const char *s, int bold);
+void gr_text(int x, int y, const char *s, int bold, bool wrap);
 void gr_texticon(int x, int y, gr_surface icon);
 int  gr_measure(const char *s);
 void gr_font_size(int *x, int *y);

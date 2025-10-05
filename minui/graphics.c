@@ -122,7 +122,7 @@ text_blend(unsigned char *src_p, int src_row_bytes, unsigned char *dst_p,
 /* ------------------------------------------------------------------------ */
 
 void
-gr_text(int x, int y, const char *s, int bold)
+gr_text(int x, int y, const char *s, int bold, bool wrap)
 {
 	GRFont *font = gr_font;
 	unsigned chr;
@@ -173,6 +173,11 @@ gr_text(int x, int y, const char *s, int bold)
 				chr = 127;
 			chr -= 32;
 			sx = overscan_offset_x + x + cx;
+			if (wrap && outside(sx + fw - 1, 0)) {
+				cx =  0;
+				cy += fh;
+				sx = overscan_offset_x + x;
+			}
 			sy = overscan_offset_y + y + cy;
 			if (!outside(sx, sy) &&
 			    !outside(sx + fw - 1, sy + fh - 1)) {
