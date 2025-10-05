@@ -1062,6 +1062,8 @@ static unsigned long int        app_animate_ms            = 0;
 static unsigned long long int   app_stop_ms               = 0;
 static unsigned long long int   app_progress_ms           = 0;
 static char                    *app_text                  = NULL;
+static unsigned long int        app_text_x                = 20;
+static unsigned long int        app_text_y                = 20;
 static gchar                   *app_images[IMAGES_MAX]    = {};
 static const char              *app_images_dir            = "/res/images";;
 static int                      app_image_count           = 0;
@@ -1186,7 +1188,7 @@ app_draw_text(void)
 {
 	if (app_text) {
 		gr_color(255, 255, 255, 255);
-		gr_text(20, 20, app_text, 1);
+		gr_text(app_text_x, app_text_y, app_text, 1);
 	}
 }
 
@@ -1434,6 +1436,10 @@ app_print_long_help(void)
 	printf("         Stop showing the IMAGE(s) after TIME milliseconds\n");
 	printf("  --text=STRING, -t STRING\n");
 	printf("         Show STRING on the screen\n");
+	printf("  --text-x=INT, -X INT\n");
+	printf("         Text X offset on the screen. Default 20\n");
+	printf("  --text-y=INT, -Y INT\n");
+	printf("         Text Y offset on the screen. Default 20\n");
 	printf("  --help, -h\n");
 	printf("         Print this help\n");
 	printf("  --terminate, -x\n");
@@ -1449,6 +1455,8 @@ static struct option opt_long[] = {
 	{"progressbar",  required_argument, 0, 'p'},
 	{"stopafter",    required_argument, 0, 's'},
 	{"text",         required_argument, 0, 't'},
+	{"text-x",       required_argument, 0, 'X'},
+	{"text-y",       required_argument, 0, 'Y'},
 	{"help",         no_argument,       0, 'h'},
 	{"terminate",    no_argument,       0, 'x'},
 	{"systemd",      no_argument,       0, 'n'},
@@ -1457,7 +1465,7 @@ static struct option opt_long[] = {
 };
 
 /** Short form command line options */
-static const char opt_short[] = "a:i:p:s:t:hxnc";
+static const char opt_short[] = "a:i:p:s:t:X:Y:hxnc";
 
 /* ========================================================================= *
  * MAIN
@@ -1498,6 +1506,14 @@ main(int argc, char *argv[])
 		case 't':
 			log_debug("got text \"%s\" to display", optarg);
 			app_text = optarg;
+			break;
+		case 'X':
+			log_debug("got text-x \"%s\"", optarg);
+			app_text_x = strtoul(optarg, NULL, 10);
+			break;
+		case 'Y':
+			log_debug("got text-y \"%s\"", optarg);
+			app_text_y = strtoul(optarg, NULL, 10);
 			break;
 		case 'x':
 			if (!unix_client_terminate_server()) {
