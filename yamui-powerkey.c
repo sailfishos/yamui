@@ -46,7 +46,19 @@
 
 const char *app_name = "powerkey";
 sig_atomic_t volatile running = 1;
-static int key_code = KEY_POWER;
+static int key_code = 0;
+
+const char *DEF_KEYS[] = {
+	"POWER",
+	"VOLUMEUP",
+	"VOLUMEDOWN",
+};
+const int DEF_KEY_CODES[] = {
+	KEY_POWER,
+	KEY_VOLUMEUP,
+	KEY_VOLUMEDOWN,
+};
+#define DEF_KEYS_MAX 3
 
 /* ------------------------------------------------------------------------ */
 
@@ -203,16 +215,18 @@ static void
 usage(void)
 {
 	printf("Usage: yamui-%s [OPTION]...\n", app_name);
-	printf("-d <key-press-duration>\tThe key press period "
-	       "in seconds before exit (default %d)\n", DEFAULT_DURATION);
-	printf("-k <key>\t\tThe key to listen: "
-	       "power (default), volumeup, volumedown\n");
-	printf("-u\t\t\tExit on the key release event\n\n");
-	printf("-p\t\t\tOnly check if key is pressed and exit\n\n");
+	printf("-d <duration>\tThe key press period in seconds before exit\n");
+	printf("\t\tDefault: %d\n\n", DEFAULT_DURATION);
+	printf("-k <key>\tThe key to listen, numeric key code or one of\n\t\t\t");
+	for (int i = 0; i < DEF_KEYS_MAX; i++)
+		printf(" %s", DEF_KEYS[i]);
+	printf("\n\t\tDefault: POWER\n\n");
+	printf("-u\t\tExit on the key release event\n\n");
+	printf("-p\t\tOnly check if key is pressed and exit\n\n");
 	printf("Return status:\n");
 	printf("%d - The key was pressed,\n", EXIT_SUCCESS);
 	printf("%d - error happens / key was not pressed,\n", EXIT_FAILURE);
-	printf("%d - signal received.\n", EXIT_SIGNAL);
+	printf("%d - signal received.\n\n", EXIT_SIGNAL);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -228,24 +242,26 @@ main(int argc, char *argv[])
 		case 'd':
 			duration = atoi(optarg);
 			if ((duration = atoi(optarg)) < 1) {
-				printf("Duration value must be positive.\n");
 				usage();
+				printf("Duration value must be positive.\n");
 				return EXIT_FAILURE;
 			}
-
 			break;
 		case 'k':
-			if (strcmp(optarg, "power") == 0)
-				key_code = KEY_POWER;
-			else if (strcmp(optarg, "volumeup") == 0)
-				key_code = KEY_VOLUMEUP;
-			else if (strcmp(optarg, "volumedown") == 0)
-				key_code = KEY_VOLUMEDOWN;
-			else {
-				printf("Key value must be power, volumeup, or volumedown.\n");
-				return EXIT_FAILURE;
+			for (int i = 0; i < DEF_KEYS_MAX; i++) {
+				if (strcasecmp(optarg, DEF_KEYS[i]) == 0){
+					key_code = DEF_KEY_CODES[i];
+					break;
+				}
 			}
-			break;
+			if (key_code != 0)
+				break;
+			key_code = atoi(optarg);
+			if ((key_code > 0) && (key_code < KEY_MAX))
+				break;
+			usage();
+			printf("Invalid key %s.\n", optarg);
+			return EXIT_FAILURE;
 		case 'p':
 			only_check_pressed = true;
 			break;
@@ -263,6 +279,13 @@ main(int argc, char *argv[])
 		usage();
 		return EXIT_FAILURE;
 	}
+	if (only_check_pressed && wait_key_up) {
+		usage();
+		printf("Can't mix -u and -p options.\n");
+		return EXIT_FAILURE;
+	}
+	if (key_code == 0)
+		key_code = KEY_POWER;
 
 	if (open_fds(fds, &num_fds, MAX_DEVICES, check_device_type) == -1)
 		return EXIT_FAILURE;
