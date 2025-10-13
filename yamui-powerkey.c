@@ -1,10 +1,5 @@
 /*
- * Key handler. Waits for all event devices providing selected key events.
- * Exits on key pressed for desired time or after receiving of SIGTERM.
- * Returns:
- *   0 - Key was pressed,
- *   1 - signal was received,
- *   2 - error.
+ * Key handler, for waiting on key press events or checking key state.
  *
  * Copyright (c) 2025 Jolla Mobile Ltd
  * Copyright (c) 2015 - 2023 Jolla Ltd.
@@ -213,9 +208,10 @@ usage(void)
 	printf("-k <key>\t\tThe key to listen: "
 	       "power (default), volumeup, volumedown\n");
 	printf("-u\t\t\tExit on the key release event\n\n");
+	printf("-p\t\t\tOnly check if key is pressed and exit\n\n");
 	printf("Return status:\n");
 	printf("%d - The key was pressed,\n", EXIT_SUCCESS);
-	printf("%d - error happens,\n", EXIT_FAILURE);
+	printf("%d - error happens / key was not pressed,\n", EXIT_FAILURE);
 	printf("%d - signal received.\n", EXIT_SIGNAL);
 }
 
@@ -225,8 +221,9 @@ int
 main(int argc, char *argv[])
 {
 	int opt, fds[MAX_DEVICES], num_fds = 0, ret = EXIT_SIGNAL;
+	bool only_check_pressed = false;
 
-	while ((opt = getopt(argc, argv, "d:k:hu")) != -1) {
+	while ((opt = getopt(argc, argv, "d:k:hpu")) != -1) {
 		switch (opt) {
 		case 'd':
 			duration = atoi(optarg);
@@ -249,6 +246,9 @@ main(int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 			break;
+		case 'p':
+			only_check_pressed = true;
+			break;
 		case 'u':
 			wait_key_up = true;
 			break;
@@ -266,6 +266,19 @@ main(int argc, char *argv[])
 
 	if (open_fds(fds, &num_fds, MAX_DEVICES, check_device_type) == -1)
 		return EXIT_FAILURE;
+
+	if (only_check_pressed) {
+		unsigned long key_b[KEY_MAX / __BITS_PER_LONG + 1];
+		for (int fi = 0; fi < num_fds; fi++) {
+			memset(key_b, 0, sizeof(key_b));
+			ioctl(fds[fi], EVIOCGKEY(sizeof(key_b)), key_b);
+			if (BIT(key_b, key_code)) {
+				return EXIT_SUCCESS;
+			} else {
+				return EXIT_FAILURE;
+			}
+		}
+	}
 
 	debugf("Started");
 	signal(SIGINT,  signal_handler);
