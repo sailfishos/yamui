@@ -1,11 +1,12 @@
 /*
- * Power key handler. Waits for all event devices providing KEY_POWER events.
- * Exits on power key pressed for desired time or after receiving of SIGTERM.
+ * Key handler. Waits for all event devices providing selected key events.
+ * Exits on key pressed for desired time or after receiving of SIGTERM.
  * Returns:
- *   0 - Power key was pressed,
+ *   0 - Key was pressed,
  *   1 - signal was received,
  *   2 - error.
  *
+ * Copyright (c) 2025 Jolla Mobile Ltd
  * Copyright (c) 2015 - 2023 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +51,7 @@
 
 const char *app_name = "powerkey";
 sig_atomic_t volatile running = 1;
+static int key_code = KEY_POWER;
 
 /* ------------------------------------------------------------------------ */
 
@@ -70,7 +72,7 @@ check_device_type(int fd, const char *name)
 		if (ioctl(fd, EVIOCGBIT(EV_KEY, KEY_MAX), bits[EV_KEY]) == -1)
 			errorf("ioctl(, EVIOCGBIT(EV_KEY, ), ) error on event"
 			       " device %s", name);
-		else if (BIT(bits[EV_KEY], KEY_POWER)) {
+		else if (BIT(bits[EV_KEY], key_code)) {
 			debugf("Device %s supports needed key events.", name);
 			return 0;
 		}
@@ -134,7 +136,7 @@ typedef enum {
 static ret_t
 handle_event(const struct input_event *ev)
 {
-	if (ev->type != EV_KEY || ev->code != KEY_POWER) {
+	if (ev->type != EV_KEY || ev->code != key_code) {
 		/* We are not recalculating timeout value in case of
 		 * "interrupted" key_down state because select() properly
 		 * updates timeout value on return. This behavior of select()
@@ -205,13 +207,14 @@ signal_handler(int sig UNUSED)
 static void
 usage(void)
 {
-	printf("Usage: yamui-%s [-d <key-press-duration>] [-u]\n", app_name);
-	printf("-d <key-press-duration>\tThe Power key press period "
-	       "in seconds before exit,\n");
-	printf("\t\t\tdefault value: %d seconds\n", DEFAULT_DURATION);
+	printf("Usage: yamui-%s [OPTION]...\n", app_name);
+	printf("-d <key-press-duration>\tThe key press period "
+	       "in seconds before exit (default %d)\n", DEFAULT_DURATION);
+	printf("-k <key>\t\tThe key to listen: "
+	       "power (default), volumeup, volumedown\n");
 	printf("-u\t\t\tExit on the key release event\n\n");
 	printf("Return status:\n");
-	printf("%d - Power key was pressed,\n", EXIT_SUCCESS);
+	printf("%d - The key was pressed,\n", EXIT_SUCCESS);
 	printf("%d - error happens,\n", EXIT_FAILURE);
 	printf("%d - signal received.\n", EXIT_SIGNAL);
 }
@@ -223,7 +226,7 @@ main(int argc, char *argv[])
 {
 	int opt, fds[MAX_DEVICES], num_fds = 0, ret = EXIT_SIGNAL;
 
-	while ((opt = getopt(argc, argv, "d:hu")) != -1) {
+	while ((opt = getopt(argc, argv, "d:k:hu")) != -1) {
 		switch (opt) {
 		case 'd':
 			duration = atoi(optarg);
@@ -233,6 +236,18 @@ main(int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 
+			break;
+		case 'k':
+			if (strcmp(optarg, "power") == 0)
+				key_code = KEY_POWER;
+			else if (strcmp(optarg, "volumeup") == 0)
+				key_code = KEY_VOLUMEUP;
+			else if (strcmp(optarg, "volumedown") == 0)
+				key_code = KEY_VOLUMEDOWN;
+			else {
+				printf("Key value must be power, volumeup, or volumedown.\n");
+				return EXIT_FAILURE;
+			}
 			break;
 		case 'u':
 			wait_key_up = true;
