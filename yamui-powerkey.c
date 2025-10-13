@@ -1,11 +1,7 @@
 /*
- * Power key handler. Waits for all event devices providing KEY_POWER events.
- * Exits on power key pressed for desired time or after receiving of SIGTERM.
- * Returns:
- *   0 - Power key was pressed,
- *   1 - signal was received,
- *   2 - error.
+ * Key handler, for waiting on key press events or checking key state.
  *
+ * Copyright (c) 2025 Jolla Mobile Ltd
  * Copyright (c) 2015 - 2023 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +46,19 @@
 
 const char *app_name = "powerkey";
 sig_atomic_t volatile running = 1;
+static int key_code = 0;
+
+const char *DEF_KEYS[] = {
+	"POWER",
+	"VOLUMEUP",
+	"VOLUMEDOWN",
+};
+const int DEF_KEY_CODES[] = {
+	KEY_POWER,
+	KEY_VOLUMEUP,
+	KEY_VOLUMEDOWN,
+};
+#define DEF_KEYS_MAX 3
 
 /* ------------------------------------------------------------------------ */
 
@@ -70,7 +79,7 @@ check_device_type(int fd, const char *name)
 		if (ioctl(fd, EVIOCGBIT(EV_KEY, KEY_MAX), bits[EV_KEY]) == -1)
 			errorf("ioctl(, EVIOCGBIT(EV_KEY, ), ) error on event"
 			       " device %s", name);
-		else if (BIT(bits[EV_KEY], KEY_POWER)) {
+		else if (BIT(bits[EV_KEY], key_code)) {
 			debugf("Device %s supports needed key events.", name);
 			return 0;
 		}
@@ -134,7 +143,7 @@ typedef enum {
 static ret_t
 handle_event(const struct input_event *ev)
 {
-	if (ev->type != EV_KEY || ev->code != KEY_POWER) {
+	if (ev->type != EV_KEY || ev->code != key_code) {
 		/* We are not recalculating timeout value in case of
 		 * "interrupted" key_down state because select() properly
 		 * updates timeout value on return. This behavior of select()
@@ -205,15 +214,19 @@ signal_handler(int sig UNUSED)
 static void
 usage(void)
 {
-	printf("Usage: yamui-%s [-d <key-press-duration>] [-u]\n", app_name);
-	printf("-d <key-press-duration>\tThe Power key press period "
-	       "in seconds before exit,\n");
-	printf("\t\t\tdefault value: %d seconds\n", DEFAULT_DURATION);
-	printf("-u\t\t\tExit on the key release event\n\n");
+	printf("Usage: yamui-%s [OPTION]...\n", app_name);
+	printf("-d <duration>\tThe key press period in seconds before exit\n");
+	printf("\t\tDefault: %d\n\n", DEFAULT_DURATION);
+	printf("-k <key>\tThe key to listen, numeric key code or one of\n\t\t\t");
+	for (int i = 0; i < DEF_KEYS_MAX; i++)
+		printf(" %s", DEF_KEYS[i]);
+	printf("\n\t\tDefault: POWER\n\n");
+	printf("-u\t\tExit on the key release event\n\n");
+	printf("-p\t\tOnly check if key is pressed and exit\n\n");
 	printf("Return status:\n");
-	printf("%d - Power key was pressed,\n", EXIT_SUCCESS);
-	printf("%d - error happens,\n", EXIT_FAILURE);
-	printf("%d - signal received.\n", EXIT_SIGNAL);
+	printf("%d - The key was pressed,\n", EXIT_SUCCESS);
+	printf("%d - error happens / key was not pressed,\n", EXIT_FAILURE);
+	printf("%d - signal received.\n\n", EXIT_SIGNAL);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -222,17 +235,35 @@ int
 main(int argc, char *argv[])
 {
 	int opt, fds[MAX_DEVICES], num_fds = 0, ret = EXIT_SIGNAL;
+	bool only_check_pressed = false;
 
-	while ((opt = getopt(argc, argv, "d:hu")) != -1) {
+	while ((opt = getopt(argc, argv, "d:k:hpu")) != -1) {
 		switch (opt) {
 		case 'd':
 			duration = atoi(optarg);
 			if ((duration = atoi(optarg)) < 1) {
-				printf("Duration value must be positive.\n");
 				usage();
+				printf("Duration value must be positive.\n");
 				return EXIT_FAILURE;
 			}
-
+			break;
+		case 'k':
+			for (int i = 0; i < DEF_KEYS_MAX; i++) {
+				if (strcasecmp(optarg, DEF_KEYS[i]) == 0){
+					key_code = DEF_KEY_CODES[i];
+					break;
+				}
+			}
+			if (key_code != 0)
+				break;
+			key_code = atoi(optarg);
+			if ((key_code > 0) && (key_code < KEY_MAX))
+				break;
+			usage();
+			printf("Invalid key %s.\n", optarg);
+			return EXIT_FAILURE;
+		case 'p':
+			only_check_pressed = true;
 			break;
 		case 'u':
 			wait_key_up = true;
@@ -248,9 +279,29 @@ main(int argc, char *argv[])
 		usage();
 		return EXIT_FAILURE;
 	}
+	if (only_check_pressed && wait_key_up) {
+		usage();
+		printf("Can't mix -u and -p options.\n");
+		return EXIT_FAILURE;
+	}
+	if (key_code == 0)
+		key_code = KEY_POWER;
 
 	if (open_fds(fds, &num_fds, MAX_DEVICES, check_device_type) == -1)
 		return EXIT_FAILURE;
+
+	if (only_check_pressed) {
+		unsigned long key_b[KEY_MAX / __BITS_PER_LONG + 1];
+		for (int fi = 0; fi < num_fds; fi++) {
+			memset(key_b, 0, sizeof(key_b));
+			ioctl(fds[fi], EVIOCGKEY(sizeof(key_b)), key_b);
+			if (BIT(key_b, key_code)) {
+				return EXIT_SUCCESS;
+			} else {
+				return EXIT_FAILURE;
+			}
+		}
+	}
 
 	debugf("Started");
 	signal(SIGINT,  signal_handler);

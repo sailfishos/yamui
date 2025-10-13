@@ -1,9 +1,8 @@
 Name:       yamui
 Summary:    Minimal UI tool for displaying simple graphical indicators
-Version:    1.2.1
+Version:    1.4.0
 Release:    1
 Url:        https://github.com/sailfishos/yamui.git
-Group:      System/Boot
 License:    ASL 2.0
 Source0:    %{name}-%{version}.tar.gz
 
@@ -27,7 +26,6 @@ make
 %make_install
 
 %files
-%defattr(-,root,root,-)
 %{_bindir}/%{name}
 %{_bindir}/yamui-powerkey
 %{_bindir}/yamui-screensaverd
