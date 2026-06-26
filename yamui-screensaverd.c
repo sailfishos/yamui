@@ -99,23 +99,6 @@ check_device_type(int fd, const char *name)
 
 /* ------------------------------------------------------------------------ */
 
-static int
-sysfs_write_int(const char *fname, int val)
-{
-	FILE *f;
-
-	if (!(f = fopen(fname, "w"))) {
-		errorf("Can't open \"%s\" for writing", fname);
-		return -1;
-	}
-
-	fprintf(f, "%d\n", val);
-	fclose(f);
-	return 0;
-}
-
-/* ------------------------------------------------------------------------ */
-
 typedef enum {
 	state_unknown = -1,
 	state_off,

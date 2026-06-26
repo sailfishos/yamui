@@ -64,4 +64,6 @@ int get_exit_status(ret_t r);
 typedef ret_t (*event_handler_t)(const struct input_event *ev);
 ret_t handle_events(int fd, event_handler_t event_handler);
 
+int sysfs_write_int(const char *fname, int val);
+
 #endif /* _YAMUI_TOOLS_H_ */
