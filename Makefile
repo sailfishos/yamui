@@ -48,6 +48,7 @@ MINUI_SRC += minui/resources.c
 MINUI_SRC += minui/graphics_drm.c
 
 YAMUI_SRC += yamui.c
+YAMUI_SRC += yamui-tools.c
 YAMUI_SRC += os-update.c
 YAMUI_SRC += $(MINUI_SRC)
 YAMUI_OBJ := $(patsubst %.c, %.o, $(YAMUI_SRC))

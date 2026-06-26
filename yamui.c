@@ -37,9 +37,12 @@
 #include <systemd/sd-daemon.h>
 
 #include "os-update.h"
+#include "yamui-tools.h"
 #include "minui/minui.h"
 
 #define IMAGES_MAX      30
+
+#define DISPLAY_BRIGHTNESS_PATH "/sys/class/backlight/panel0-backlight/brightness"
 
 /* ========================================================================= *
  * Logging
@@ -69,10 +72,10 @@
  * DISPLAY
  * ------------------------------------------------------------------------- */
 
-static void display_acquire            (void);
+static void display_acquire            (bool write_brightness);
 static void display_release            (void);
 static bool display_is_acquired        (void);
-static void display_set_updates_enabled(bool enabled);
+static void display_set_updates_enabled(bool enabled, bool write_brightness);
 static void display_set_blanked        (bool blanked);
 static bool display_can_be_drawn       (void);
 
@@ -171,6 +174,11 @@ static bool display_acquired = false;
 static bool display_released = false;
 static bool display_enabled  = false;
 static bool display_blanked  = false;
+static char *display_brightness_path = NULL;
+static int display_brightness_value = 1024;
+
+// For yamui-tools
+const char *app_name = "yamui";
 
 /** Acquire display
  *
@@ -178,7 +186,7 @@ static bool display_blanked  = false;
  *       has not been called yet.
  */
 static void
-display_acquire(void)
+display_acquire(bool write_brightness)
 {
 	if (!display_acquired && !display_released) {
 		display_acquired = true;
@@ -190,6 +198,10 @@ display_acquire(void)
 		else {
 			gr_color(0, 0, 0, 255);
 			gr_clear();
+			if (write_brightness) {
+				sysfs_write_int(display_brightness_path,
+					display_brightness_value);
+			}
 		}
 	}
 }
@@ -221,10 +233,10 @@ display_is_acquired(void)
  * Called based on setUpdatesEnabled() dbus method calls from mce.
  */
 static void
-display_set_updates_enabled(bool enabled)
+display_set_updates_enabled(bool enabled, bool write_brightness)
 {
 	if (enabled)
-		display_acquire();
+		display_acquire(write_brightness);
 
 	if (!display_is_acquired())
 		enabled = false;
@@ -813,7 +825,7 @@ compositor_method_call_cb(GDBusConnection       *connection,
 		gboolean enabled = FALSE;
 		g_variant_get(parameters, "(b)", &enabled);
 		log_debug("enabled := %s", enabled ? "true" : "false");
-		display_set_updates_enabled(enabled);
+		display_set_updates_enabled(enabled, false);
 		if (enabled)
 			app_on_enable_from_dbus();
 		g_dbus_method_invocation_return_value(invocation, NULL);
@@ -1355,7 +1367,7 @@ app_start_cb(gpointer aptr)
 		 * will be granted permission to draw and grap
 		 * display already now.
 		 */
-		display_set_updates_enabled(true);
+		display_set_updates_enabled(true, true);
 	}
 
 	/* Select what kind of ui mode to use */
@@ -1488,6 +1500,14 @@ main(int argc, char *argv[])
 	setlinebuf(stderr);
 
 	log_debug("startup");
+
+	if (getenv("DISPLAY_BRIGHTNESS_PATH") != NULL) {
+		display_brightness_path = getenv("DISPLAY_BRIGHTNESS_PATH");
+	}
+
+	if (getenv("DISPLAY_BRIGHTNESS") != NULL) {
+		display_brightness_value = atoi(getenv("DISPLAY_BRIGHTNESS"));
+	}
 
 	for (;;) {
 		int opt = getopt_long(argc, argv, opt_short, opt_long, NULL);

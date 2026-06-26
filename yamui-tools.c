@@ -176,3 +176,20 @@ get_exit_status(ret_t r)
 {
 	return (r == ret_success) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
+
+/* ------------------------------------------------------------------------ */
+
+int
+sysfs_write_int(const char *fname, int val)
+{
+	FILE *f;
+
+	if (!(f = fopen(fname, "w"))) {
+		errorf("Can't open \"%s\" for writing", fname);
+		return -1;
+	}
+
+	fprintf(f, "%d\n", val);
+	fclose(f);
+	return 0;
+}
