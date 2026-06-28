@@ -42,8 +42,6 @@
 
 #define IMAGES_MAX      30
 
-#define DISPLAY_BRIGHTNESS_PATH "/sys/class/backlight/panel0-backlight/brightness"
-
 /* ========================================================================= *
  * Logging
  * ========================================================================= */
@@ -174,7 +172,7 @@ static bool display_acquired = false;
 static bool display_released = false;
 static bool display_enabled  = false;
 static bool display_blanked  = false;
-static char *display_brightness_path = NULL;
+static char *display_brightness_path = "/sys/class/backlight/panel0-backlight/brightness";
 static int display_brightness_value = 1024;
 
 // For yamui-tools
